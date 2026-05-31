@@ -18,11 +18,24 @@ src/
 
 ## Build
 
+Linux:
+
 ```bash
 sudo apt install build-essential cmake pkg-config libgtk-4-dev
 cmake -S . -B build
 cmake --build build -j
 ```
+
+Windows (MSYS2 MINGW64 shell):
+
+```bash
+pacman -S --needed mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake \
+  mingw-w64-x86_64-ninja mingw-w64-x86_64-pkgconf mingw-w64-x86_64-gtk4
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+```
+
+CI also produces a portable `windows-x64` zip on GitHub Actions. Extract it and launch with `run.bat` so the bundled GTK runtime paths are configured before starting `ins_gtk4_nmea.exe`.
 
 ## Run
 
@@ -42,6 +55,12 @@ Serial NMEA:
 
 ```bash
 ./build/ins_gtk4_nmea --source serial-nmea0183:///dev/ttyUSB0?baud=115200
+```
+
+On Windows, use a COM device path from the MSYS2 shell or `run.bat`:
+
+```bash
+./build/ins_gtk4_nmea.exe --source serial-nmea0183://COM3?baud=115200
 ```
 
 ## Keyboard controls

@@ -217,10 +217,129 @@ jobs:
             ins-dashboard-gtk-${{ env.ARTIFACT_TAG }}-linux-arm64.tar.gz
             ins-dashboard-gtk_${{ env.DEB_VERSION }}_${{ env.DEB_ARCH }}.deb
 
+
+  windows-x64:
+    name: windows (x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSYS2 (MINGW64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-gtk4
+            mingw-w64-x86_64-python
+            p7zip
+            git
+
+      - name: Compute artifact tag
+        shell: msys2 {0}
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "ARTIFACT_TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          else
+            echo "ARTIFACT_TAG=sha-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Configure (release)
+        shell: msys2 {0}
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build (release)
+        shell: msys2 {0}
+        run: cmake --build build --config Release --parallel
+
+      - name: Package portable zip
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          install -d dist dist/share dist/lib dist/etc
+          cp -f build/ins_gtk4_nmea.exe dist/ins_gtk4_nmea.exe
+          [ -f README.md ] && cp -f README.md dist/README.md || true
+          [ -f LICENSE ] && cp -f LICENSE dist/LICENSE || true
+
+          copy_deps_recursive() {
+            local changed=1
+            while [[ "$changed" -eq 1 ]]; do
+              changed=0
+              while IFS= read -r dll; do
+                local name
+                name="$(basename "$dll")"
+                if [[ ! -f "dist/$name" ]]; then
+                  cp -f "$dll" "dist/$name"
+                  changed=1
+                fi
+              done < <(
+                find dist -maxdepth 1 -type f \( -name '*.exe' -o -name '*.dll' \) -print0 |
+                  xargs -0 -r ldd 2>/dev/null |
+                  awk '{print $3}' |
+                  grep -E '^/mingw64/bin/.*\.dll$' |
+                  sort -u
+              )
+            done
+          }
+          copy_deps_recursive
+
+          # GLib spawn helpers and GDBus avoid accidental pickup from Git Bash/Cygwin.
+          cp -f /mingw64/bin/gdbus.exe dist/ || true
+          cp -f /mingw64/bin/gspawn-win64-helper.exe dist/ || true
+          cp -f /mingw64/bin/gspawn-win64-helper-console.exe dist/ || true
+          copy_deps_recursive
+
+          # Bundle GTK/GLib runtime data needed by a portable GTK4 application.
+          mkdir -p dist/share/glib-2.0/schemas
+          cp -r /mingw64/share/glib-2.0/schemas/* dist/share/glib-2.0/schemas/
+          /mingw64/bin/glib-compile-schemas dist/share/glib-2.0/schemas
+
+          mkdir -p dist/lib/gdk-pixbuf-2.0/2.10.0/loaders
+          cp -r /mingw64/lib/gdk-pixbuf-2.0/2.10.0/loaders/* dist/lib/gdk-pixbuf-2.0/2.10.0/loaders/
+          /mingw64/bin/gdk-pixbuf-query-loaders > dist/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache
+
+          [ -d /mingw64/lib/gtk-4.0 ] && cp -r /mingw64/lib/gtk-4.0 dist/lib/ || true
+          [ -d /mingw64/share/icons ] && cp -r /mingw64/share/icons dist/share/ || true
+          [ -d /mingw64/share/themes ] && cp -r /mingw64/share/themes dist/share/ || true
+
+          cat > dist/run.bat <<'EOF_RUN'
+          @echo off
+          setlocal
+          set "DIR=%~dp0"
+
+          rem Keep PATH local so GTK/GLib loads bundled DLLs first.
+          set "PATH=%DIR%;%SystemRoot%\System32;%SystemRoot%"
+
+          set "APPBASE=%LOCALAPPDATA%\ins-dashboard-gtk"
+          set "HOME=%APPBASE%"
+          set "XDG_CACHE_HOME=%APPBASE%\cache"
+          mkdir "%XDG_CACHE_HOME%" 2>nul
+
+          set "GSETTINGS_SCHEMA_DIR=%DIR%share\glib-2.0\schemas"
+          set "GDK_PIXBUF_MODULE_FILE=%DIR%lib\gdk-pixbuf-2.0\2.10.0\loaders.cache"
+          set "GDK_PIXBUF_MODULEDIR=%DIR%lib\gdk-pixbuf-2.0\2.10.0\loaders"
+
+          "%DIR%ins_gtk4_nmea.exe" %*
+          endlocal
+          EOF_RUN
+
+          7z a "ins-dashboard-gtk-${{ env.ARTIFACT_TAG }}-windows-x64.zip" ./dist/*
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: ins-dashboard-gtk-${{ env.ARTIFACT_TAG }}-windows-x64.zip
+
   publish:
     name: publish to GitHub Release (+ flat APT repo)
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux-amd64, linux-arm64]
+    needs: [linux-amd64, linux-arm64, windows-x64]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -254,6 +373,7 @@ jobs:
           files: |
             release-assets/linux-amd64/*.tar.gz
             release-assets/linux-arm64/*.tar.gz
+            release-assets/windows-x64/*.zip
             apt-repo/*
 
       - name: Publish/update stable APT release (tag "apt")
