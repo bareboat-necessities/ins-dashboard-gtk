@@ -1,79 +1,79 @@
 # INS GTK4 NMEA Display
 
-A small GTK4/Cairo C++20 application that displays marine INS screens:
+GTK4/C++20 marine INS display for NMEA 0183 streams.
 
-1. Primary helm / attitude
-2. Heave detail
-3. Wave direction relative to heading
-4. Rate of turn
-5. INS status
+This refactored version splits the original monolithic `main.cpp` into logical modules:
 
-It reads NMEA 0183-style lines from either TCP or serial:
-
-```bash
-./ins_gtk4_nmea --source tcp-nmea0183://127.0.0.1:10110
-./ins_gtk4_nmea --source serial-nmea0183:///dev/ttyUSB0?baud=115200
+```text
+src/
+  main.cpp                  CLI parsing + application startup only
+  app/                      GTK application wiring, timer, keyboard handling
+  input/                    TCP/serial/demo input readers and source URI parsing
+  model/                    Shared INS data model
+  nmea/                     NMEA checksum and sentence parser
+  render/                   Cairo drawing helpers, icons, and screen drawing
+  sim/                      Demo/synthetic INS data generator
+  util/                     String and math helpers
 ```
 
-If no source is supplied, it runs in demo mode.
-
-## Build on Debian/Ubuntu/Raspberry Pi OS
+## Build
 
 ```bash
 sudo apt install build-essential cmake pkg-config libgtk-4-dev
 cmake -S . -B build
 cmake --build build -j
+```
+
+## Run
+
+Demo mode:
+
+```bash
 ./build/ins_gtk4_nmea --source demo://
+```
+
+TCP NMEA:
+
+```bash
+./build/ins_gtk4_nmea --source tcp-nmea0183://127.0.0.1:10110
+```
+
+Serial NMEA:
+
+```bash
+./build/ins_gtk4_nmea --source serial-nmea0183:///dev/ttyUSB0?baud=115200
 ```
 
 ## Keyboard controls
 
-- `1` Primary helm
+- `1` Helm / attitude
 - `2` Heave
 - `3` Wave direction
 - `4` Rate of turn
 - `5` INS status
-- Left/right arrows cycle screens
-- `q` or `Esc` quit
+- `Left` / `Right` / `Space` cycles screens
+- `q` / `Esc` exits
 
-## Supported input sentences
+## Supported sentences
 
-The app accepts standard-ish and proprietary sentences. Checksum is optional; if present, it is verified.
+Standard-ish:
 
-### Proprietary compact INS sentence
+- `HDT` / `HDG`: heading
+- `ROT`: rate of turn, degrees/minute
+- `XDR`: roll, pitch, yaw/heading, heave, ROT, wave, Hs, Tp by transducer name
+- `PRDID`: pitch, roll, heading
 
-```text
-$PINS,roll,pitch,yaw,heave,heaveVel,rotDegMin,waveRelDeg,waveConf,Hs,Tp,status*hh
-```
-
-Example without checksum:
-
-```text
-$PINS,-6.2,2.1,127,0.18,0.11,8.4,45,78,0.72,4.8,A
-```
-
-### Proprietary split sentences
+Proprietary `$PINS` examples:
 
 ```text
-$PINS,ATT,roll,pitch,yaw
-$PINS,HEAVE,heave,heaveVel,Hs,Tp
-$PINS,WAVE,waveRelDeg,confidencePercent
-$PINS,STATUS,ATT=GOOD,HEAVE=GOOD,WAVEDIR=FAIR,MAG=LOCKED,GYRO=LEARNING,ACC=STABLE,TEMP=36.8,SAMPLE=240,MAGRATE=100
+$PINS,ATT,-6.2,2.1,127.0
+$PINS,HEAVE,0.18,0.11,0.72,4.8
+$PINS,WAVE,45.0,78.0
+$PINS,STATUS,ATT=GOOD,HEAVE=GOOD,WAVE=FAIR,MAG=LOCKED,GYRO=LEARNING,ACC=STABLE,TEMP=36.8,SAMPLE=240,MAGRATE=100,SYS=INS GOOD
 ```
 
-### Common sentences
+Compact numeric form:
 
 ```text
-$--HDT,heading,T
-$--HDG,heading,...
-$--ROT,rateOfTurnDegPerMin,A
-$PRDID,pitch,roll,heading
-$--XDR,A,value,D,ROLL,A,value,D,PITCH,A,value,D,YAW,...
+$PINS,roll,pitch,yaw,heave,heaveVel,rotDegMin,waveRelDeg,waveConf,Hs,Tp,status
 ```
-
-## Notes
-
-- Internally the UI displays heave positive upward.
-- Rate of turn is displayed in degrees per minute.
-- Wave direction is displayed relative to vessel heading: `0° = bow`, `90° = starboard beam`, `180° = stern`, `270° = port beam`.
-- The serial parser supports common POSIX `termios` baud constants. If your URI says `baud=11520`, that is probably a typo for `115200`; `11520` is usually not a standard termios baud constant.

@@ -10,13 +10,22 @@ pkg_check_modules(GTK4 REQUIRED gtk4)
 
 add_executable(ins_gtk4_nmea
     src/main.cpp
+    src/app/App.cpp
+    src/input/InputReader.cpp
+    src/input/SourceUri.cpp
+    src/nmea/NmeaParser.cpp
+    src/render/DrawUtil.cpp
+    src/render/Icons.cpp
+    src/render/Screens.cpp
+    src/sim/DemoData.cpp
+    src/util/StringUtil.cpp
 )
 
-target_include_directories(ins_gtk4_nmea PRIVATE ${GTK4_INCLUDE_DIRS})
+target_include_directories(ins_gtk4_nmea PRIVATE
+    src
+    ${GTK4_INCLUDE_DIRS}
+)
+
 target_link_directories(ins_gtk4_nmea PRIVATE ${GTK4_LIBRARY_DIRS})
 target_link_libraries(ins_gtk4_nmea PRIVATE ${GTK4_LIBRARIES})
 target_compile_options(ins_gtk4_nmea PRIVATE ${GTK4_CFLAGS_OTHER} -Wall -Wextra -Wpedantic)
-
-if(UNIX AND NOT APPLE)
-    target_link_libraries(ins_gtk4_nmea PRIVATE pthread)
-endif()
