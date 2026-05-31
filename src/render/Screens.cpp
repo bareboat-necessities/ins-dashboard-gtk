@@ -69,7 +69,7 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
     cairo_arc(cr, cx, cy, r - 10, 0, 2 * PI);
     cairo_clip(cr);
     cairo_translate(cr, cx, cy);
-    cairo_rotate(-d.roll_deg * DEG);
+    cairo_rotate(cr, -d.roll_deg * DEG);
     const double pitch_px = clampd(d.pitch_deg, -25, 25) * 5.5;
     setc(cr, {0.02, 0.42, 0.92, 1});
     cairo_rectangle(cr, -r - 30, -r - 30 + pitch_px, 2 * r + 60, r + 30 - pitch_px);
