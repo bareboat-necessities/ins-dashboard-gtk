@@ -101,12 +101,12 @@ void activate_cb(GtkApplication* gtk_app, gpointer user_data) {
 
     GtkWidget* win = gtk_application_window_new(gtk_app);
     gtk_window_set_title(GTK_WINDOW(win), "INS GTK4 NMEA Display");
-    gtk_window_set_default_size(GTK_WINDOW(win), 900, 900);
+    gtk_window_set_default_size(GTK_WINDOW(win), 720, 720);
 
     GtkWidget* area = gtk_drawing_area_new();
     app->drawing = area;
-    gtk_drawing_area_set_content_width(GTK_DRAWING_AREA(area), 720);
-    gtk_drawing_area_set_content_height(GTK_DRAWING_AREA(area), 720);
+    gtk_drawing_area_set_content_width(GTK_DRAWING_AREA(area), 360);
+    gtk_drawing_area_set_content_height(GTK_DRAWING_AREA(area), 360);
     gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(area), draw_cb, app, nullptr);
     gtk_window_set_child(GTK_WINDOW(win), area);
 

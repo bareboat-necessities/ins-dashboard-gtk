@@ -18,12 +18,6 @@ using util::fmt_signed;
 using util::PI;
 using util::wrap360;
 
-constexpr double DEG_PER_REV = 360.0;
-
-double rot_rpm(double deg_per_minute) {
-    return deg_per_minute / DEG_PER_REV;
-}
-
 void draw_triangle(cairo_t* cr, double x, double y, double size, double angle, Color c) {
     cairo_save(cr);
     cairo_translate(cr, x, y);
@@ -35,6 +29,15 @@ void draw_triangle(cairo_t* cr, double x, double y, double size, double angle, C
     cairo_close_path(cr);
     cairo_fill(cr);
     cairo_restore(cr);
+}
+
+double rot_rpm(double deg_min) {
+    return deg_min / 360.0;
+}
+
+std::string fmt_rpm(double deg_min) {
+    const double rpm = rot_rpm(deg_min);
+    return fmt_signed(rpm, std::abs(rpm) < 0.1 ? 3 : 2);
 }
 
 void draw_background(cairo_t* cr) {
@@ -113,10 +116,10 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
     text_shadow(cr, fmt(d.heading_deg, 0) + "°", 185, 72, 72, CYAN, "bold", 0, 0.5);
     line(cr, 500, 28, 500, 112, {1, 1, 1, 0.12}, 2);
     text_shadow(cr, "ROT", 555, 72, 40, WHITE, "bold", 0, 0.5);
-    text_shadow(cr, fmt_signed(rot_rpm(d.rot_deg_min), 3), 682, 72, 72, CYAN, "bold", 0, 0.5);
-    text(cr, "RPM", 870, 85, 32, CYAN, "bold", 0, 0.5);
+    text_shadow(cr, fmt_rpm(d.rot_deg_min), 670, 72, 54, CYAN, "bold", 0, 0.5);
+    text(cr, "RPM", 875, 84, 28, CYAN, "bold", 0, 0.5);
 
-    const double cx = 500, cy = 405, r = 290;
+    const double cx = 500, cy = 400, r = 275;
     fill_circle_gradient(cr, cx, cy, r + 15, {0.03, 0.10, 0.19, 1.0}, {0.008, 0.018, 0.036, 1.0}, LINE, 5.0);
     fill_circle_gradient(cr, cx, cy, r, {0.02, 0.12, 0.24, 0.95}, {0.01, 0.03, 0.06, 0.95}, {0.18, 0.25, 0.34, 0.8}, 1.5);
 
@@ -269,7 +272,7 @@ void draw_wave(cairo_t* cr, const model::InsData& d) {
     draw_background(cr);
     draw_title_bar(cr, "WAVE DIRECTION", "RELATIVE TO VESSEL HEADING", "CONF " + fmt(d.wave_conf_pct, 0) + "%");
 
-    const double cx = 500, cy = 470, r = 300;
+    const double cx = 500, cy = 470, r = 280;
     fill_circle_gradient(cr, cx, cy, r + 12, {0.018, 0.07, 0.14, 1.0}, {0.008, 0.022, 0.040, 1.0}, LINE, 3.0);
     dashed_circle(cr, cx, cy, 220, {0.12, 0.72, 1.0, 0.36}, 1.5, 6, 7);
     dashed_circle(cr, cx, cy, 160, {0.12, 0.72, 1.0, 0.30}, 1.4, 5, 6);
@@ -326,7 +329,7 @@ void draw_wave(cairo_t* cr, const model::InsData& d) {
 
 void draw_rot(cairo_t* cr, const model::InsData& d) {
     draw_background(cr);
-    draw_title_bar(cr, "RATE OF TURN", "TURN PERFORMANCE");
+    draw_title_bar(cr, "RATE OF TURN", "ROT IN REVOLUTIONS PER MINUTE");
     text_shadow(cr, "PORT", 95, 215, 40, RED, "bold", 0, 0.5);
     text_shadow(cr, "STBD", 810, 215, 40, GREEN, "bold", 0, 0.5);
 
@@ -340,24 +343,28 @@ void draw_rot(cairo_t* cr, const model::InsData& d) {
     cairo_set_line_width(cr, 4);
     cairo_stroke(cr);
 
-    for (int v = -60; v <= 60; v += 5) {
-        const double angle = (-90 + v * 1.5) * DEG;
-        const double inner = r - ((v % 30 == 0) ? 52 : (v % 10 == 0 ? 38 : 25));
+    // Gauge scale is shown in RPM; internal model remains deg/min.  ±0.20 RPM = ±72 deg/min.
+    for (int i = -20; i <= 20; ++i) {
+        const double rpm = i * 0.01;
+        const double angle = (-90 + (rpm / 0.20) * 90.0) * DEG;
+        const bool major = (i % 10 == 0);
+        const bool mid = (i % 5 == 0);
+        const double inner = r - (major ? 52 : (mid ? 38 : 25));
         Color cc = WHITE;
-        if (v <= -55) cc = RED;
-        if (v >= 55) cc = GREEN;
+        if (i <= -18) cc = RED;
+        if (i >= 18) cc = GREEN;
         line(cr, cx + inner * std::cos(angle), cy + inner * std::sin(angle),
-             cx + r * std::cos(angle), cy + r * std::sin(angle), cc, v % 10 == 0 ? 3.0 : 1.5);
-        if (v % 30 == 0) {
-            const double tx = cx + (inner - 40) * std::cos(angle);
-            const double ty = cy + (inner - 40) * std::sin(angle);
-            text_shadow(cr, fmt(std::abs(rot_rpm(v)), 2), tx, ty, 28, WHITE, "bold", 0.5, 0.5);
+             cx + r * std::cos(angle), cy + r * std::sin(angle), cc, mid ? 2.6 : 1.4);
+        if (major) {
+            const double tx = cx + (inner - 44) * std::cos(angle);
+            const double ty = cy + (inner - 44) * std::sin(angle);
+            text_shadow(cr, i == 0 ? "0" : fmt(std::abs(rpm), 2), tx, ty, 25, WHITE, "bold", 0.5, 0.5);
         }
     }
     text_shadow(cr, "RPM", cx, cy - 235, 34, CYAN, "bold", 0.5, 0.5);
 
-    const double val = clampd(d.rot_deg_min, -60, 60);
-    const double angle = (-90 + val * 1.5) * DEG;
+    const double val_rpm = clampd(rot_rpm(d.rot_deg_min), -0.20, 0.20);
+    const double angle = (-90 + (val_rpm / 0.20) * 90.0) * DEG;
     const double nx = cx + (r - 100) * std::cos(angle);
     const double ny = cy + (r - 100) * std::sin(angle);
     glow_line(cr, cx, cy, nx, ny, WHITE, 8, 16.0);
@@ -369,8 +376,8 @@ void draw_rot(cairo_t* cr, const model::InsData& d) {
     cairo_stroke(cr);
 
     draw_panel(cr, 50, 610, 900, 135);
-    text_shadow(cr, fmt_signed(rot_rpm(d.rot_deg_min), 3), 150, 680, 82, CYAN, "bold", 0, 0.5);
-    text(cr, "RPM", 485, 695, 44, CYAN, "bold", 0, 0.5);
+    text_shadow(cr, fmt_rpm(d.rot_deg_min), 135, 680, 78, CYAN, "bold", 0, 0.5);
+    text(cr, "RPM", 470, 695, 42, CYAN, "bold", 0, 0.5);
     line(cr, 625, 635, 625, 720, {1, 1, 1, 0.10}, 2);
     text_shadow(cr, "TURNING", 700, 656, 35, WHITE, "bold", 0, 0.5);
     text_shadow(cr, d.rot_deg_min >= 0 ? "STBD" : "PORT", 700, 705, 55, d.rot_deg_min >= 0 ? GREEN : RED, "bold", 0, 0.5);
