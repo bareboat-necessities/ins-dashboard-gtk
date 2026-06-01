@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <functional>
+#include <iterator>
 #include <vector>
 
 namespace ins_display::render {
@@ -56,6 +57,36 @@ void draw_wave_direction_arrow(cairo_t* cr, double cx, double cy, double theta, 
     cairo_rotate(cr, theta + PI / 2.0);
     draw_wave_icon(cr, -34.0, -24.0, 0.48, c);
     cairo_restore(cr);
+}
+
+double estimated_heave_velocity(const HeaveHistory& hist, double now_s) {
+    if (hist.empty()) return 0.0;
+
+    const auto& newest = hist.back();
+    const double min_dt = 0.05;
+    const double target_window_s = 0.6;
+    auto older = hist.end();
+
+    for (auto it = hist.rbegin(); it != hist.rend(); ++it) {
+        const double age = now_s - it->first;
+        if (age >= target_window_s) {
+            older = std::next(it).base();
+            break;
+        }
+    }
+
+    if (older == hist.end() && hist.size() >= 2) {
+        older = hist.begin();
+    }
+    if (older == hist.end()) return 0.0;
+
+    const double dt = newest.first - older->first;
+    if (dt < min_dt) return 0.0;
+    return (newest.second - older->second) / dt;
+}
+
+double displayed_heave_velocity(const model::InsData& d, const HeaveHistory& hist, double now_s) {
+    return d.heave_vel_available ? d.heave_vel_mps : estimated_heave_velocity(hist, now_s);
 }
 
 void draw_background(cairo_t* cr) {
@@ -252,6 +283,8 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
 }
 
 void draw_heave(cairo_t* cr, const model::InsData& d, const HeaveHistory& hist, double now_s) {
+    const double heave_vel_mps = displayed_heave_velocity(d, hist, now_s);
+
     draw_background(cr);
     draw_title_bar(cr, "HEAVE", "VERTICAL MOTION", d.system_status);
 
@@ -260,16 +293,16 @@ void draw_heave(cairo_t* cr, const model::InsData& d, const HeaveHistory& hist, 
     draw_vertical_motion_icon(cr, 122, 260, 0.95, CYAN);
     text_shadow(cr, fmt(d.heave_m, 2), 315, 255, 122, CYAN, "bold", 0, 0.5);
     text(cr, "m", 768, 282, 50, CYAN, "bold", 0, 0.5);
-    text_shadow(cr, d.heave_vel_mps >= 0 ? "↑" : "↓", 885, 265, 105, GREEN, "bold", 0.5, 0.5);
-    text(cr, d.heave_vel_mps >= 0 ? "RISING" : "FALLING", 500, 340, 34, CYAN, "bold", 0.5, 0.5);
+    text_shadow(cr, heave_vel_mps >= 0 ? "↑" : "↓", 885, 265, 105, GREEN, "bold", 0.5, 0.5);
+    text(cr, heave_vel_mps >= 0 ? "RISING" : "FALLING", 500, 340, 34, CYAN, "bold", 0.5, 0.5);
     line(cr, 365, 350, 455, 350, {0.50, 0.85, 1.0, 0.35}, 1.5);
     line(cr, 545, 350, 635, 350, {0.50, 0.85, 1.0, 0.35}, 1.5);
 
     draw_panel(cr, 30, 430, 940, 82, 16);
     text_shadow(cr, "VERTICAL SPEED", 120, 472, 31, WHITE, "bold", 0, 0.5);
-    text_shadow(cr, fmt_signed(d.heave_vel_mps, 2), 520, 472, 55, CYAN, "bold", 0, 0.5);
+    text_shadow(cr, fmt_signed(heave_vel_mps, 2), 520, 472, 55, CYAN, "bold", 0, 0.5);
     text(cr, "m/s", 730, 476, 32, CYAN, "bold", 0, 0.5);
-    text_shadow(cr, d.heave_vel_mps >= 0 ? "↑" : "↓", 900, 472, 52, GREEN, "bold", 0.5, 0.5);
+    text_shadow(cr, heave_vel_mps >= 0 ? "↑" : "↓", 900, 472, 52, GREEN, "bold", 0.5, 0.5);
 
     const double gx = 55, gy = 545, gw = 890, gh = 260;
     fill_round_gradient(cr, gx, gy, gw, gh, 18, {0.010, 0.030, 0.060, 0.92}, {0.007, 0.018, 0.040, 0.92}, LINE, 2);

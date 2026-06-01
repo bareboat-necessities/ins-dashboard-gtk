@@ -89,7 +89,7 @@ void parse_pins(const std::vector<std::string>& f, InsData& d) {
 
     if (mode == "HEAVE") {
         if (f.size() > 2) if (auto x = to_double(f[2])) d.heave_m = *x;
-        if (f.size() > 3) if (auto x = to_double(f[3])) d.heave_vel_mps = *x;
+        if (f.size() > 3) if (auto x = to_double(f[3])) { d.heave_vel_mps = *x; d.heave_vel_available = true; }
         if (f.size() > 4) if (auto x = to_double(f[4])) d.hs_m = *x;
         if (f.size() > 5) if (auto x = to_double(f[5])) d.tp_s = *x;
         return;
@@ -118,7 +118,7 @@ void parse_pins(const std::vector<std::string>& f, InsData& d) {
         if (auto x = to_double(f[3])) d.heading_deg = d.yaw_deg = wrap360(*x);
     }
     if (f.size() >= 5) if (auto x = to_double(f[4])) d.heave_m = *x;
-    if (f.size() >= 6) if (auto x = to_double(f[5])) d.heave_vel_mps = *x;
+    if (f.size() >= 6) if (auto x = to_double(f[5])) { d.heave_vel_mps = *x; d.heave_vel_available = true; }
     if (f.size() >= 7) if (auto x = to_double(f[6])) d.rot_deg_min = *x;
     if (f.size() >= 8) if (auto x = to_double(f[7])) apply_wave_degrees(d, *x);
     if (f.size() >= 9) if (auto x = to_double(f[8])) d.wave_conf_pct = clampd(*x, 0.0, 100.0);
@@ -155,6 +155,12 @@ void parse_xdr(const std::vector<std::string>& f, InsData& d) {
             d.pitch_deg = *val;
         } else if (name_contains(name, "YAW") || name_contains(name, "HDG") || name_contains(name, "HEAD")) {
             d.heading_deg = d.yaw_deg = wrap360(*val);
+        } else if ((name_contains(name, "HEAVE") || name_contains(name, "VERT")) &&
+                   (name_contains(name, "VEL") || name_contains(name, "SPD") ||
+                    name_contains(name, "SPEED")) &&
+                   (unit == "M/S" || unit == "MPS" || unit == "MS")) {
+            d.heave_vel_mps = *val;
+            d.heave_vel_available = true;
         } else if (name_contains(name, "HEAVE")) {
             d.heave_m = *val;
             d.heave_status = "GOOD";
