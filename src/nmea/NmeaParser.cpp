@@ -89,20 +89,47 @@ void parse_pins(const std::vector<std::string>& f, InsData& d) {
     }
 }
 
+bool name_contains(const std::string& name, const std::string& needle) {
+    return name.find(needle) != std::string::npos;
+}
+
 void parse_xdr(const std::vector<std::string>& f, InsData& d) {
-    // $--XDR,A,value,D,ROLL,A,value,D,PITCH,... groups of four after sentence id.
+    // $--XDR,type,value,unit,name groups of four after sentence id.
+    // The supported sensor stream sends one measurement per sentence, for example:
+    //   $IIXDR,A,-16.9,D,PTCH*79
+    //   $IIXDR,A,15.4,D,ROLL*48
+    //   $IIXDR,A,25.5,D,WAVAXIS*14
+    //   $IIXDR,D,0.0000,M,DRT1*2A
     for (size_t i = 1; i + 3 < f.size(); i += 4) {
         auto val = to_double(f[i + 1]);
         if (!val) continue;
+
+        const std::string measurement_type = upper(f[i]);
+        const std::string unit = upper(f[i + 2]);
         const std::string name = upper(f[i + 3]);
-        if (name.find("ROLL") != std::string::npos) d.roll_deg = *val;
-        else if (name.find("PITCH") != std::string::npos) d.pitch_deg = *val;
-        else if (name.find("YAW") != std::string::npos || name.find("HDG") != std::string::npos || name.find("HEAD") != std::string::npos) d.heading_deg = d.yaw_deg = wrap360(*val);
-        else if (name.find("HEAVE") != std::string::npos) d.heave_m = *val;
-        else if (name.find("ROT") != std::string::npos) d.rot_deg_min = *val;
-        else if (name.find("WAVE") != std::string::npos) d.wave_rel_deg = wrap360(*val);
-        else if (name == "HS") d.hs_m = *val;
-        else if (name == "TP") d.tp_s = *val;
+
+        if (name_contains(name, "ROLL")) {
+            d.roll_deg = *val;
+        } else if (name_contains(name, "PITCH") || name_contains(name, "PTCH")) {
+            d.pitch_deg = *val;
+        } else if (name_contains(name, "YAW") || name_contains(name, "HDG") || name_contains(name, "HEAD")) {
+            d.heading_deg = d.yaw_deg = wrap360(*val);
+        } else if (name_contains(name, "HEAVE")) {
+            d.heave_m = *val;
+        } else if (name_contains(name, "ROT")) {
+            d.rot_deg_min = *val;
+        } else if (name == "WAVAXIS" || name_contains(name, "WAVE")) {
+            d.wave_rel_deg = wrap360(*val);
+            d.wave_status = "GOOD";
+        } else if (name == "HS") {
+            d.hs_m = *val;
+        } else if (name == "TP") {
+            d.tp_s = *val;
+        } else if (name == "DRT1" && measurement_type == "D" && unit == "M") {
+            // DRT1 is a distance transducer in the target stream. The dashboard has
+            // no dedicated draft/distance field, so accept the sentence without
+            // changing the displayed INS values.
+        }
     }
 }
 
@@ -160,13 +187,12 @@ void parse_nmea_line(const std::string& raw, model::SharedModel& model) {
         if (f.size() > 1) if (auto x = to_double(f[1])) d.pitch_deg = *x;
         if (f.size() > 2) if (auto x = to_double(f[2])) d.roll_deg = *x;
         if (f.size() > 3) if (auto x = to_double(f[3])) d.heading_deg = d.yaw_deg = wrap360(*x);
-    } else if (type == "HDT") {
+    } else if (type == "HDT" || type == "HDM" || type == "HDG") {
         if (f.size() > 1) if (auto x = to_double(f[1])) d.heading_deg = d.yaw_deg = wrap360(*x);
-    } else if (type == "HDG") {
-        if (f.size() > 1) if (auto x = to_double(f[1])) d.heading_deg = d.yaw_deg = wrap360(*x);
+        if (type == "HDM") d.mag_status = "GOOD";
     } else if (type == "ROT") {
         if (f.size() > 1) if (auto x = to_double(f[1])) d.rot_deg_min = *x;
-        if (f.size() > 2 && upper(f[2]) != "A") d.system_status = "INS WARN";
+        if (f.size() > 2) d.system_status = upper(f[2]) == "A" ? "INS GOOD" : "INS WARN";
     } else if (type == "XDR") {
         parse_xdr(f, d);
     }

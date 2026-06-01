@@ -75,24 +75,38 @@ On Windows, use a COM device path from the MSYS2 shell or `run.bat`:
 
 ## Supported sentences
 
-Standard-ish:
+The dashboard is configured for the incoming `II` talker stream that reports attitude,
+magnetic heading, rate of turn, and wave axis using standard NMEA 0183 sentence
+types:
 
-- `HDT` / `HDG`: heading
-- `ROT`: rate of turn, degrees/minute
-- `XDR`: roll, pitch, yaw/heading, heave, ROT, wave, Hs, Tp by transducer name
-- `PRDID`: pitch, roll, heading
+- `IIXDR` transducer measurements:
+  - `A,<degrees>,D,WAVAXIS`: relative wave axis / wave direction
+  - `A,<degrees>,D,PTCH`: pitch
+  - `A,<degrees>,D,ROLL`: roll
+  - `D,<metres>,M,DRT1`: accepted distance transducer sentence; currently not shown
+    because the dashboard has no dedicated draft/distance field
+- `IIROT,<degrees_per_minute>,A`: valid rate of turn
+- `IIHDM,<degrees>,M`: magnetic heading
 
-Proprietary `$PINS` examples:
-
-```text
-$PINS,ATT,-6.2,2.1,127.0
-$PINS,HEAVE,0.18,0.11,0.72,4.8
-$PINS,WAVE,45.0,78.0
-$PINS,STATUS,ATT=GOOD,HEAVE=GOOD,WAVE=FAIR,MAG=LOCKED,GYRO=LEARNING,ACC=STABLE,TEMP=36.8,SAMPLE=240,MAGRATE=100,SYS=INS GOOD
-```
-
-Compact numeric form:
+Example stream:
 
 ```text
-$PINS,roll,pitch,yaw,heave,heaveVel,rotDegMin,waveRelDeg,waveConf,Hs,Tp,status
+$IIXDR,A,25.5,D,WAVAXIS*14
+$IIROT,-1.8,A*02
+$IIHDM,197.4,M*29
+$IIXDR,A,-16.9,D,PTCH*79
+$IIXDR,A,15.4,D,ROLL*48
+$IIXDR,D,0.0000,M,DRT1*2A
+$IIXDR,A,25.5,D,WAVAXIS*14
+$IIROT,-1.0,A*0A
+$IIHDM,197.4,M*29
+$IIXDR,A,-16.9,D,PTCH*79
+$IIXDR,A,15.4,D,ROLL*48
+$IIXDR,D,0.0000,M,DRT1*2A
+$IIXDR,A,25.5,D,WAVAXIS*14
+$IIROT,-1.6,A*0C
+$IIHDM,197.5,M*28
 ```
+
+Checksums are validated when present. Lines without checksums are still accepted for
+lab/demo streams.
