@@ -21,12 +21,21 @@ void draw_wave_icon(cairo_t* cr, double x, double y, double scale, Color c) {
 
 void draw_wave_circle_icon(cairo_t* cr, double x, double y, double scale, Color c) {
     setc(cr, c);
-    cairo_set_line_width(cr, 3.0 * scale);
-
+    cairo_set_line_width(cr, 3.6 * scale);
     cairo_arc(cr, x, y, 30 * scale, 0, 2 * util::PI);
     cairo_stroke(cr);
 
-    draw_wave_icon(cr, x - 20 * scale, y - 6 * scale, 0.28 * scale, c);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    for (int k = 0; k < 3; ++k) {
+        const double yy = y - 10 * scale + k * 10 * scale;
+        cairo_move_to(cr, x - 20 * scale, yy);
+        for (int i = 0; i < 2; ++i) {
+            cairo_rel_curve_to(cr, 5 * scale, -5 * scale, 10 * scale, -5 * scale, 15 * scale, 0);
+            cairo_rel_curve_to(cr, 5 * scale, 5 * scale, 10 * scale, 5 * scale, 15 * scale, 0);
+        }
+        cairo_stroke(cr);
+    }
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
 }
 
 void draw_wave_from_icon(cairo_t* cr, double x, double y, double scale, Color c) {
@@ -94,16 +103,23 @@ void draw_vertical_motion_icon(cairo_t* cr, double x, double y, double scale, Co
 
 void draw_heave_icon(cairo_t* cr, double x, double y, double scale, Color c) {
     setc(cr, c);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
 
-    // Vertical arrow.
-    line(cr, x, y + 28 * scale, x, y - 28 * scale, c, 3.6 * scale);
-    cairo_move_to(cr, x, y - 40 * scale);
-    cairo_line_to(cr, x - 12 * scale, y - 20 * scale);
-    cairo_line_to(cr, x + 12 * scale, y - 20 * scale);
+    // Up-arrow over three wave crests, matching the compact status icon in the reference art.
+    line(cr, x, y - 28 * scale, x, y + 8 * scale, c, 4.2 * scale);
+    cairo_move_to(cr, x, y - 42 * scale);
+    cairo_line_to(cr, x - 13 * scale, y - 22 * scale);
+    cairo_line_to(cr, x - 4 * scale, y - 24 * scale);
+    cairo_line_to(cr, x - 4 * scale, y + 8 * scale);
+    cairo_line_to(cr, x + 4 * scale, y + 8 * scale);
+    cairo_line_to(cr, x + 4 * scale, y - 24 * scale);
+    cairo_line_to(cr, x + 13 * scale, y - 22 * scale);
     cairo_close_path(cr);
     cairo_fill(cr);
 
-    draw_wave_icon(cr, x - 40 * scale, y + 10 * scale, 0.34 * scale, c);
+    draw_wave_icon(cr, x - 39 * scale, y + 20 * scale, 0.34 * scale, c);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
 }
 
 void draw_heave_status_icon(cairo_t* cr, double x, double y, double scale, Color c) {
@@ -206,62 +222,88 @@ void draw_boat_front(cairo_t* cr, double cx, double cy, double scale, Color c) {
 }
 
 void draw_pitch_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    const double s = scale;
     setc(cr, c);
-    cairo_set_line_width(cr, 3.5 * scale);
+    cairo_set_line_width(cr, 3.8 * s);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
 
-    // Side-view hull.
-    cairo_move_to(cr, x - 32 * scale, y + 12 * scale);
-    cairo_curve_to(cr, x - 18 * scale, y - 2 * scale, x + 16 * scale, y - 2 * scale, x + 34 * scale, y + 10 * scale);
-    cairo_line_to(cr, x + 26 * scale, y + 24 * scale);
-    cairo_line_to(cr, x - 24 * scale, y + 24 * scale);
+    // Side-profile boat with a slightly raised bow, like the pitch tile in the reference.
+    cairo_move_to(cr, x - 43 * s, y + 2 * s);
+    cairo_line_to(cr, x - 27 * s, y + 25 * s);
+    cairo_curve_to(cr, x - 12 * s, y + 32 * s, x + 17 * s, y + 30 * s, x + 34 * s, y + 23 * s);
+    cairo_line_to(cr, x + 42 * s, y + 3 * s);
+    cairo_curve_to(cr, x + 16 * s, y - 2 * s, x - 15 * s, y - 3 * s, x - 43 * s, y + 2 * s);
     cairo_close_path(cr);
     cairo_stroke(cr);
 
-    // Mast / pitch arrow.
-    line(cr, x, y + 10 * scale, x, y - 40 * scale, c, 3.2 * scale);
-    cairo_move_to(cr, x, y - 50 * scale);
-    cairo_line_to(cr, x - 10 * scale, y - 32 * scale);
-    cairo_line_to(cr, x + 10 * scale, y - 32 * scale);
+    line(cr, x - 33 * s, y + 7 * s, x + 36 * s, y + 7 * s, c, 3.0 * s);
+    line(cr, x - 8 * s, y + 8 * s, x - 4 * s, y + 27 * s, c, 2.6 * s);
+    line(cr, x + 16 * s, y + 8 * s, x + 12 * s, y + 27 * s, c, 2.6 * s);
+
+    // Vertical pitch arrow rising from the deck.
+    line(cr, x, y + 4 * s, x, y - 42 * s, c, 3.8 * s);
+    cairo_move_to(cr, x, y - 55 * s);
+    cairo_line_to(cr, x - 12 * s, y - 34 * s);
+    cairo_line_to(cr, x - 4 * s, y - 36 * s);
+    cairo_line_to(cr, x - 4 * s, y + 4 * s);
+    cairo_line_to(cr, x + 4 * s, y + 4 * s);
+    cairo_line_to(cr, x + 4 * s, y - 36 * s);
+    cairo_line_to(cr, x + 12 * s, y - 34 * s);
     cairo_close_path(cr);
     cairo_fill(cr);
 
-    // Keel dot.
-    cairo_arc(cr, x, y + 26 * scale, 3.5 * scale, 0, 2 * util::PI);
-    cairo_fill(cr);
+    draw_wave_icon(cr, x - 45 * s, y + 30 * s, 0.23 * s, c);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
 }
 
 void draw_roll_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    const double s = scale;
     cairo_save(cr);
     cairo_translate(cr, x, y);
-    cairo_rotate(cr, -18.0 * util::DEG);
+    cairo_rotate(cr, -14.0 * util::DEG);
 
     setc(cr, c);
-    cairo_set_line_width(cr, 3.5 * scale);
+    cairo_set_line_width(cr, 3.6 * s);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
 
-    // Tilted small hull.
-    cairo_move_to(cr, -28 * scale, 8 * scale);
-    cairo_curve_to(cr, -18 * scale, -6 * scale, 18 * scale, -6 * scale, 28 * scale, 8 * scale);
-    cairo_line_to(cr, 20 * scale, 22 * scale);
-    cairo_line_to(cr, -20 * scale, 22 * scale);
+    // Tilted front-facing vessel with cabin windows, closer to the roll badge in the mockup.
+    cairo_move_to(cr, -30 * s, 4 * s);
+    cairo_line_to(cr, -22 * s, -17 * s);
+    cairo_line_to(cr, -12 * s, -27 * s);
+    cairo_line_to(cr, 11 * s, -27 * s);
+    cairo_line_to(cr, 22 * s, -16 * s);
+    cairo_line_to(cr, 31 * s, 5 * s);
+    cairo_stroke(cr);
+    line(cr, -22 * s, -8 * s, 22 * s, -8 * s, c, 3.0 * s);
+    line(cr, 0, -27 * s, 0, 20 * s, c, 2.8 * s);
+
+    cairo_move_to(cr, -38 * s, 3 * s);
+    cairo_line_to(cr, -27 * s, 25 * s);
+    cairo_curve_to(cr, -12 * s, 35 * s, 13 * s, 35 * s, 28 * s, 25 * s);
+    cairo_line_to(cr, 38 * s, 3 * s);
+    cairo_line_to(cr, 17 * s, 9 * s);
+    cairo_line_to(cr, 0, 15 * s);
+    cairo_line_to(cr, -17 * s, 9 * s);
     cairo_close_path(cr);
     cairo_stroke(cr);
-
     cairo_restore(cr);
 
-    // Waves.
-    draw_wave_icon(cr, x - 38 * scale, y + 26 * scale, 0.30 * scale, c);
+    draw_wave_icon(cr, x - 42 * s, y + 30 * s, 0.32 * s, c);
 
-    // Curved roll arrow.
+    // Small curved roll arrow at the upper-right.
     setc(cr, c);
-    cairo_set_line_width(cr, 3.0 * scale);
-    cairo_arc(cr, x + 24 * scale, y - 24 * scale, 15 * scale, -2.35, -0.75);
+    cairo_set_line_width(cr, 3.2 * s);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_arc(cr, x + 25 * s, y - 30 * s, 16 * s, -2.45, -0.82);
     cairo_stroke(cr);
-
-    cairo_move_to(cr, x + 34 * scale, y - 30 * scale);
-    cairo_line_to(cr, x + 30 * scale, y - 18 * scale);
-    cairo_line_to(cr, x + 42 * scale, y - 21 * scale);
+    cairo_move_to(cr, x + 36 * s, y - 36 * s);
+    cairo_line_to(cr, x + 31 * s, y - 22 * s);
+    cairo_line_to(cr, x + 45 * s, y - 26 * s);
     cairo_close_path(cr);
     cairo_fill(cr);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
 }
 
 void draw_attitude_icon(cairo_t* cr, double x, double y, double scale, Color c) {
