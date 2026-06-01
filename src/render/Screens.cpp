@@ -102,6 +102,10 @@ void draw_curved_roll_scale(cairo_t* cr, double cx, double cy, double radius, in
     const bool clockwise = side > 0;
 
     auto stroke_arc = [&](double start, double end, Color c, double width) {
+        // Start each arc as an independent path. Cairo connects an arc to an
+        // existing current point with a straight segment, which can leave
+        // visible diagonal artifacts from nearby scale labels/ticks.
+        cairo_new_path(cr);
         setc(cr, c);
         cairo_set_line_width(cr, width);
         if (clockwise) {
@@ -157,6 +161,7 @@ void draw_status_row(cairo_t* cr, int idx, const std::string& label, const std::
     line(cr, 520, y + 10, 520, y + 55, {1, 1, 1, 0.10}, 1.5);
     icon(cr, 92, y + 34, 0.72, CYAN);
     text_shadow(cr, label, 185, y + 34, 31, WHITE, "bold", 0, 0.5);
+    cairo_new_path(cr);
     setc(cr, vc);
     cairo_arc(cr, 575, y + 34, 11, 0, 2 * PI);
     cairo_fill(cr);
@@ -182,6 +187,7 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
     fill_circle_gradient(cr, cx, cy, r, {0.02, 0.12, 0.24, 0.95}, {0.01, 0.03, 0.06, 0.95}, {0.18, 0.25, 0.34, 0.8}, 1.5);
 
     cairo_save(cr);
+    cairo_new_path(cr);
     cairo_arc(cr, cx, cy, r - 10, 0, 2 * PI);
     cairo_clip(cr);
     cairo_translate(cr, cx, cy);
@@ -308,6 +314,7 @@ void draw_heave(cairo_t* cr, const model::InsData& d, const HeaveHistory& hist, 
     }
     if (have) cairo_stroke(cr);
     if (have) {
+        cairo_new_path(cr);
         setc(cr, CYAN);
         cairo_arc(cr, last_x, last_y, 5, 0, 2 * PI);
         cairo_fill(cr);
@@ -401,16 +408,19 @@ void draw_rot(cairo_t* cr, const model::InsData& d) {
     cairo_stroke(cr);
 
     // Inner blue rim.
+    cairo_new_path(cr);
     setc(cr, {0.04, 0.62, 1.0, 0.95});
     cairo_set_line_width(cr, 4.0);
     cairo_arc(cr, cx, cy, r - 18, PI, 2 * PI);
     cairo_stroke(cr);
 
     // Colored edge bands.
+    cairo_new_path(cr);
     setc(cr, RED);
     cairo_set_line_width(cr, 6.0);
     cairo_arc(cr, cx, cy, r - 26, 1.03 * PI, 1.18 * PI);
     cairo_stroke(cr);
+    cairo_new_path(cr);
     setc(cr, GREEN);
     cairo_arc(cr, cx, cy, r - 26, -0.18 * PI, -0.03 * PI);
     cairo_stroke(cr);
