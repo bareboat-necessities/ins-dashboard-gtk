@@ -471,9 +471,9 @@ void draw_rot(cairo_t* cr, const model::InsData& d) {
     text_shadow(cr, "PORT", 78, 198, 38, RED, "bold", 0, 0.5);
     text_shadow(cr, "STBD", 815, 198, 38, GREEN, "bold", 0, 0.5);
 
-    constexpr double ROT_RPM_LIMIT = 2.0;
-    constexpr double ROT_RPM_TICK_STEP = 0.1;
-    constexpr double ROT_RPM_LABEL_STEP = 0.5;
+    constexpr double ROT_RPM_LIMIT = 10.0;
+    constexpr double ROT_RPM_TICK_STEP = 0.5;
+    constexpr double ROT_RPM_LABEL_STEP = 2.0;
 
     const double rot_rpm = d.rot_deg_min / 360.0;
     const double cx = 500, cy = 545, r = 390;
