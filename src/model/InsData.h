@@ -12,6 +12,7 @@ struct InsData {
     double pitch_deg = 2.1;
     double heave_m = 0.18;
     double heave_vel_mps = 0.11;
+    bool heave_vel_available = false;
     double rot_deg_min = 8.4;
     double wave_rel_deg = 45.0;
     double wave_rel_mag_deg = 45.0;

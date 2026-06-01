@@ -90,7 +90,7 @@ types:
   - `A,<degrees>,D,WAVAXIS` or `A,<degrees>,D,WAVDIR`: relative wave axis / wave direction
   - `A,<degrees>,D,PTCH`: pitch
   - `A,<degrees>,D,ROLL`: roll
-  - `D,<metres>,M,DRT1`: real-time heave displacement in metres
+  - `D,<metres>,M,DRT1`: real-time heave displacement in metres; the Heave screen derives vertical speed from successive heave samples when the stream does not provide vertical speed
 - `IITXT,01,01,00,WAVSGN=<sign> POL=<polarity>`: optional wave-direction
   sign metadata applied to the latest and subsequent `WAVAXIS`/`WAVDIR` magnitudes
 - `IIROT,<degrees_per_minute>,A`: valid rate of turn
