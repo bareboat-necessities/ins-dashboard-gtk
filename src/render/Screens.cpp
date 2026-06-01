@@ -58,43 +58,63 @@ void draw_panel(cairo_t* cr, double x, double y, double w, double h, double r = 
     fill_round_gradient(cr, x, y, w, h, r, {0.030, 0.092, 0.155, 0.92}, {0.018, 0.055, 0.105, 0.92}, LINE, 2.0);
 }
 
+
 void draw_curved_roll_scale(cairo_t* cr, double cx, double cy, double radius, int side) {
-    const double sx = cx + side * (radius + 58.0);
+    // Side roll scales from the original mockup: thin curved arcs outside
+    // the main attitude ball, with labels at 60/30/0/30/60.
+    const double sx = (side < 0) ? (cx - radius - 8.0) : (cx + radius + 8.0);
     const double sy = cy;
-    const double arc_r = 108.0;
-    const double start = side < 0 ? (130.0 * DEG) : (50.0 * DEG);
-    const double end   = side < 0 ? (-130.0 * DEG) : (-50.0 * DEG);
+    const double ar = 108.0;
+
+    const double a0 = (side < 0) ? 2.22 : -1.08;
+    const double a1 = (side < 0) ? 4.06 :  1.08;
 
     setc(cr, {0.85, 0.90, 0.97, 0.45});
     cairo_set_line_width(cr, 2.0);
-    cairo_arc_negative(cr, sx, sy, arc_r, start, end);
+    cairo_arc(cr, sx, sy, ar, a0, a1);
     cairo_stroke(cr);
 
-    auto draw_segment = [&](double a1_deg, double a2_deg, Color c) {
-        setc(cr, c);
-        cairo_set_line_width(cr, 3.0);
-        if (side < 0) cairo_arc_negative(cr, sx, sy, arc_r, a1_deg * DEG, a2_deg * DEG);
-        else cairo_arc_negative(cr, sx, sy, arc_r, (180.0 - a1_deg) * DEG, (180.0 - a2_deg) * DEG);
-        cairo_stroke(cr);
-    };
-    draw_segment(130, 112, RED);
-    draw_segment(-112, -130, GREEN);
+    setc(cr, RED);
+    cairo_set_line_width(cr, 3.2);
+    cairo_arc(cr, sx, sy, ar, a0, a0 + 0.32);
+    cairo_stroke(cr);
 
-    for (int k = -60; k <= 60; k += 5) {
-        const double frac = (k + 60.0) / 120.0;
-        const double ang = start + frac * (end - start);
-        const double inner = arc_r - ((k % 30 == 0) ? 18 : (k % 10 == 0 ? 12 : 7));
-        const double outer = arc_r + 2;
-        line(cr, sx + inner * std::cos(ang), sy + inner * std::sin(ang),
+    setc(cr, GREEN);
+    cairo_set_line_width(cr, 3.2);
+    cairo_arc(cr, sx, sy, ar, a1 - 0.32, a1);
+    cairo_stroke(cr);
+
+    auto tick_angle = [&](double deg) {
+        // +60 at top, 0 middle, -60 bottom.
+        const double t = (60.0 - deg) / 120.0;
+        return a0 + t * (a1 - a0);
+    };
+
+    for (int deg = -60; deg <= 60; deg += 5) {
+        const double ang = tick_angle(static_cast<double>(deg));
+        const double outer = ar;
+        const double inner = outer - ((deg % 30 == 0) ? 18.0 : (deg % 10 == 0 ? 11.0 : 6.0));
+
+        line(cr,
+             sx + inner * std::cos(ang), sy + inner * std::sin(ang),
              sx + outer * std::cos(ang), sy + outer * std::sin(ang),
-             WHITE, (k % 30 == 0) ? 2.2 : 1.3);
-        if (k % 30 == 0) {
-            const double tx = sx + (arc_r - 34) * std::cos(ang);
-            const double ty = sy + (arc_r - 34) * std::sin(ang);
-            text_shadow(cr, std::to_string(std::abs(k)), tx, ty, 21, WHITE, "bold", 0.5, 0.5);
+             WHITE,
+             (deg % 30 == 0) ? 2.2 : 1.1);
+
+        if (deg % 30 == 0) {
+            const double tx = sx + (ar - 34.0) * std::cos(ang);
+            const double ty = sy + (ar - 34.0) * std::sin(ang);
+            text_shadow(cr, std::to_string(std::abs(deg)), tx, ty, 20, WHITE, "bold", 0.5, 0.5);
         }
     }
-    draw_triangle(cr, sx + side * 10.0, sy, 12, side < 0 ? PI / 2 : -PI / 2, WHITE);
+
+    const double ang0 = tick_angle(0.0);
+    draw_triangle(cr,
+                  sx + (ar - 2.0) * std::cos(ang0),
+                  sy + (ar - 2.0) * std::sin(ang0),
+                  12,
+                  ang0 + ((side < 0) ? PI / 2.0 : -PI / 2.0),
+                  WHITE);
 }
 
 void draw_status_row(cairo_t* cr, int idx, const std::string& label, const std::string& value, Color vc,
