@@ -90,4 +90,108 @@ void draw_roll_icon(cairo_t* cr, double x, double y, double scale, Color c) {
     cairo_stroke(cr);
 }
 
+void draw_attitude_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    cairo_set_line_width(cr, 3.5 * scale);
+    cairo_arc(cr, x, y, 28 * scale, 0, 2 * util::PI);
+    cairo_stroke(cr);
+    line(cr, x - 18 * scale, y, x + 18 * scale, y, c, 3 * scale);
+    line(cr, x, y - 20 * scale, x, y + 20 * scale, c, 2 * scale);
+    cairo_move_to(cr, x - 10 * scale, y - 2 * scale);
+    cairo_line_to(cr, x, y - 10 * scale);
+    cairo_line_to(cr, x + 10 * scale, y - 2 * scale);
+    cairo_stroke(cr);
+}
+
+void draw_compass_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    cairo_set_line_width(cr, 3 * scale);
+    cairo_arc(cr, x, y, 28 * scale, 0, 2 * util::PI);
+    cairo_stroke(cr);
+    cairo_move_to(cr, x, y - 22 * scale);
+    cairo_line_to(cr, x - 8 * scale, y + 8 * scale);
+    cairo_line_to(cr, x, y + 2 * scale);
+    cairo_line_to(cr, x + 8 * scale, y + 8 * scale);
+    cairo_close_path(cr);
+    cairo_stroke(cr);
+    text(cr, "N", x, y - 35 * scale, 18 * scale, c, "bold", 0.5, 0.5);
+}
+
+void draw_magnet_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    cairo_set_line_width(cr, 5 * scale);
+    cairo_arc(cr, x, y, 22 * scale, util::PI, 2 * util::PI);
+    cairo_stroke(cr);
+    line(cr, x - 22 * scale, y, x - 22 * scale, y + 18 * scale, c, 5 * scale);
+    line(cr, x + 22 * scale, y, x + 22 * scale, y + 18 * scale, c, 5 * scale);
+    line(cr, x - 28 * scale, y + 18 * scale, x - 16 * scale, y + 18 * scale, RED, 5 * scale);
+    line(cr, x + 16 * scale, y + 18 * scale, x + 28 * scale, y + 18 * scale, CYAN, 5 * scale);
+}
+
+void draw_gyro_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    cairo_set_line_width(cr, 3 * scale);
+    cairo_arc(cr, x, y, 26 * scale, 0.2, 5.8);
+    cairo_stroke(cr);
+    cairo_arc(cr, x, y, 14 * scale, 0, 2 * util::PI);
+    cairo_stroke(cr);
+    cairo_move_to(cr, x + 22 * scale, y - 10 * scale);
+    cairo_line_to(cr, x + 34 * scale, y - 20 * scale);
+    cairo_line_to(cr, x + 30 * scale, y - 5 * scale);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+}
+
+void draw_accel_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    cairo_set_line_width(cr, 3 * scale);
+    line(cr, x - 24 * scale, y, x + 24 * scale, y, c, 3 * scale);
+    line(cr, x, y + 24 * scale, x, y - 24 * scale, c, 3 * scale);
+    cairo_move_to(cr, x + 24 * scale, y);
+    cairo_line_to(cr, x + 12 * scale, y - 8 * scale);
+    cairo_line_to(cr, x + 12 * scale, y + 8 * scale);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+    cairo_move_to(cr, x, y - 24 * scale);
+    cairo_line_to(cr, x - 8 * scale, y - 12 * scale);
+    cairo_line_to(cr, x + 8 * scale, y - 12 * scale);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+}
+
+void draw_thermo_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    cairo_set_line_width(cr, 3.5 * scale);
+    cairo_arc(cr, x, y + 14 * scale, 12 * scale, 0, 2 * util::PI);
+    cairo_stroke_preserve(cr);
+    setc(cr, {c.r, c.g, c.b, 0.15});
+    cairo_fill(cr);
+    setc(cr, c);
+    rounded_rect(cr, x - 7 * scale, y - 28 * scale, 14 * scale, 42 * scale, 7 * scale);
+    cairo_stroke(cr);
+    line(cr, x, y - 22 * scale, x, y + 8 * scale, c, 4 * scale);
+}
+
+void draw_samplerate_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    cairo_set_line_width(cr, 3 * scale);
+    cairo_move_to(cr, x - 34 * scale, y);
+    cairo_rel_line_to(cr, 10 * scale, 0);
+    cairo_rel_line_to(cr, 8 * scale, -18 * scale);
+    cairo_rel_line_to(cr, 12 * scale, 36 * scale);
+    cairo_rel_line_to(cr, 12 * scale, -36 * scale);
+    cairo_rel_line_to(cr, 8 * scale, 18 * scale);
+    cairo_rel_line_to(cr, 14 * scale, 0);
+    cairo_stroke(cr);
+}
+
+void draw_bars_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    cairo_set_line_width(cr, 0);
+    cairo_rectangle(cr, x - 24 * scale, y + 10 * scale, 10 * scale, 18 * scale);
+    cairo_rectangle(cr, x - 8 * scale, y - 2 * scale, 10 * scale, 30 * scale);
+    cairo_rectangle(cr, x + 8 * scale, y - 18 * scale, 10 * scale, 46 * scale);
+    cairo_fill(cr);
+}
+
 } // namespace ins_display::render
