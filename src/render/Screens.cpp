@@ -38,6 +38,10 @@ double signed_relative_degrees(double deg) {
     return deg > 180.0 ? deg - 360.0 : deg;
 }
 
+double rot_rpm(double deg_min) {
+    return deg_min / 360.0;
+}
+
 void draw_triangle(cairo_t* cr, double x, double y, double size, double angle, Color c) {
     cairo_save(cr);
     cairo_translate(cr, x, y);
@@ -59,8 +63,8 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
     text(cr, fmt(d.heading_deg, 0) + "°", 185, 72, 72, CYAN, "bold", 0, 0.5);
     line(cr, 500, 28, 500, 112, LINE, 2);
     text(cr, "ROT", 555, 72, 40, WHITE, "bold", 0, 0.5);
-    text(cr, fmt_signed(d.rot_deg_min, 0) + "°", 682, 72, 72, CYAN, "bold", 0, 0.5);
-    text(cr, "/min", 850, 85, 32, CYAN, "bold", 0, 0.5);
+    text(cr, fmt_signed(rot_rpm(d.rot_deg_min), 3), 675, 72, 56, CYAN, "bold", 0, 0.5);
+    text(cr, "RPM", 865, 85, 32, CYAN, "bold", 0, 0.5);
 
     const double cx = 500, cy = 398, r = 300;
     setc(cr, {0.02, 0.31, 0.78, 0.92});
@@ -290,10 +294,10 @@ void draw_rot(cairo_t* cr, const model::InsData& d) {
         if (v % 30 == 0) {
             const double tx = cx + (inner - 40) * std::cos(angle);
             const double ty = cy + (inner - 40) * std::sin(angle);
-            text(cr, std::to_string(std::abs(v)), tx, ty, 28, WHITE, "bold", 0.5, 0.5);
+            text(cr, fmt(std::abs(rot_rpm(v)), 2), tx, ty, 28, WHITE, "bold", 0.5, 0.5);
         }
     }
-    text(cr, "°/min", cx, cy - 235, 34, CYAN, "bold", 0.5, 0.5);
+    text(cr, "RPM", cx, cy - 235, 34, CYAN, "bold", 0.5, 0.5);
 
     const double val = clampd(d.rot_deg_min, -60, 60);
     const double angle = (-90 + val * 1.5) * DEG;
@@ -308,8 +312,8 @@ void draw_rot(cairo_t* cr, const model::InsData& d) {
     cairo_stroke(cr);
 
     fill_round(cr, 50, 610, 900, 135, 18, PANEL2, LINE, 2);
-    text(cr, fmt_signed(d.rot_deg_min, 1) + "°", 150, 680, 82, CYAN, "bold", 0, 0.5);
-    text(cr, "/min", 485, 695, 44, CYAN, "bold", 0, 0.5);
+    text(cr, fmt_signed(rot_rpm(d.rot_deg_min), 3), 150, 680, 74, CYAN, "bold", 0, 0.5);
+    text(cr, "RPM", 495, 695, 44, CYAN, "bold", 0, 0.5);
     line(cr, 625, 635, 625, 720, LINE, 2);
     text(cr, "TURNING", 700, 656, 35, WHITE, "bold", 0, 0.5);
     text(cr, d.rot_deg_min >= 0 ? "STBD" : "PORT", 700, 705, 55, d.rot_deg_min >= 0 ? GREEN : RED, "bold", 0, 0.5);
