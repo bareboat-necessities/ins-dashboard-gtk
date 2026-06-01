@@ -92,28 +92,34 @@ void draw_curved_roll_scale(cairo_t* cr, double cx, double cy, double radius, in
     // small, separate scales beside it.
     const double ar = radius + 58.0;
 
-    const double a0 = (side < 0) ? 2.22 : -1.08;
-    const double a1 = (side < 0) ? 4.06 :  1.08;
+    // Define one side, then mirror the angles across the vertical centerline.
+    // This keeps the port and starboard scales the same size and puts the
+    // matching degree marks at the same height on both sides.
+    const double port_top = 2.22;
+    const double port_bottom = 4.06;
+    const double top = (side < 0) ? port_top : PI - port_top;
+    const double bottom = (side < 0) ? port_bottom : PI - port_bottom;
+    const bool clockwise = side > 0;
 
-    setc(cr, {0.85, 0.90, 0.97, 0.45});
-    cairo_set_line_width(cr, 2.0);
-    cairo_arc(cr, cx, cy, ar, a0, a1);
-    cairo_stroke(cr);
+    auto stroke_arc = [&](double start, double end, Color c, double width) {
+        setc(cr, c);
+        cairo_set_line_width(cr, width);
+        if (clockwise) {
+            cairo_arc_negative(cr, cx, cy, ar, start, end);
+        } else {
+            cairo_arc(cr, cx, cy, ar, start, end);
+        }
+        cairo_stroke(cr);
+    };
 
-    setc(cr, RED);
-    cairo_set_line_width(cr, 3.2);
-    cairo_arc(cr, cx, cy, ar, a0, a0 + 0.32);
-    cairo_stroke(cr);
-
-    setc(cr, GREEN);
-    cairo_set_line_width(cr, 3.2);
-    cairo_arc(cr, cx, cy, ar, a1 - 0.32, a1);
-    cairo_stroke(cr);
+    stroke_arc(top, bottom, {0.85, 0.90, 0.97, 0.45}, 2.0);
+    stroke_arc(top, top + (clockwise ? -0.32 : 0.32), RED, 3.2);
+    stroke_arc(bottom + (clockwise ? 0.32 : -0.32), bottom, GREEN, 3.2);
 
     auto tick_angle = [&](double deg) {
         // +60 at top, 0 middle, -60 bottom.
         const double t = (60.0 - deg) / 120.0;
-        return a0 + t * (a1 - a0);
+        return top + t * (bottom - top);
     };
 
     for (int deg = -60; deg <= 60; deg += 5) {
