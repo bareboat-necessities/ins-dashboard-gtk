@@ -140,26 +140,80 @@ void draw_boat_top(cairo_t* cr, double cx, double cy, double scale, Color c) {
 }
 
 void draw_boat_front(cairo_t* cr, double cx, double cy, double scale, Color c) {
+    // Front-view boat symbol for the attitude indicator.
+    // Designed to match the original mockup more closely: broad white bow,
+    // raised cabin, dark windshield panes, and a clean centerline.
+    cairo_save(cr);
+    cairo_translate(cr, cx, cy);
+    cairo_scale(cr, scale, scale);
+
+    // Outer hull/cabin silhouette.
     setc(cr, c);
-    cairo_set_line_width(cr, 4.0 * scale);
-    cairo_move_to(cr, cx - 50 * scale, cy + 18 * scale);
-    cairo_curve_to(cr, cx - 43 * scale, cy - 8 * scale, cx - 34 * scale, cy - 26 * scale, cx - 28 * scale, cy - 30 * scale);
-    cairo_line_to(cr, cx + 28 * scale, cy - 30 * scale);
-    cairo_curve_to(cr, cx + 34 * scale, cy - 26 * scale, cx + 43 * scale, cy - 8 * scale, cx + 50 * scale, cy + 18 * scale);
-    cairo_line_to(cr, cx + 28 * scale, cy + 44 * scale);
-    cairo_line_to(cr, cx - 28 * scale, cy + 44 * scale);
+    cairo_set_line_width(cr, 4.0);
+    cairo_move_to(cr, -54, 20);
+    cairo_curve_to(cr, -49, 4, -42, -20, -33, -34);
+    cairo_line_to(cr, -23, -58);
+    cairo_curve_to(cr, -17, -65, 17, -65, 23, -58);
+    cairo_line_to(cr, 33, -34);
+    cairo_curve_to(cr, 42, -20, 49, 4, 54, 20);
+    cairo_line_to(cr, 31, 50);
+    cairo_line_to(cr, -31, 50);
     cairo_close_path(cr);
     cairo_stroke_preserve(cr);
-    setc(cr, {0.94, 0.96, 0.98, 0.95});
+    setc(cr, {0.94, 0.96, 0.98, 0.96});
     cairo_fill(cr);
 
+    // Cabin / windshield frame.
     setc(cr, c);
-    cairo_set_line_width(cr, 4.0 * scale);
-    line(cr, cx, cy - 52 * scale, cx, cy + 45 * scale, c, 3.2 * scale);
-    line(cr, cx - 2 * scale, cy - 42 * scale, cx - 34 * scale, cy - 34 * scale, c, 3.0 * scale);
-    line(cr, cx + 2 * scale, cy - 42 * scale, cx + 34 * scale, cy - 34 * scale, c, 3.0 * scale);
-    line(cr, cx - 2 * scale, cy - 16 * scale, cx - 40 * scale, cy - 10 * scale, c, 3.0 * scale);
-    line(cr, cx + 2 * scale, cy - 16 * scale, cx + 40 * scale, cy - 10 * scale, c, 3.0 * scale);
+    cairo_set_line_width(cr, 3.4);
+    cairo_move_to(cr, -29, -34);
+    cairo_line_to(cr, -20, -58);
+    cairo_line_to(cr, 20, -58);
+    cairo_line_to(cr, 29, -34);
+    cairo_stroke(cr);
+
+    // Dark windshield panes, similar to the generated sketch.
+    setc(cr, {0.02, 0.055, 0.105, 1.0});
+    cairo_move_to(cr, -24, -31);
+    cairo_line_to(cr, -17, -52);
+    cairo_line_to(cr, -4, -52);
+    cairo_line_to(cr, -5, -29);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+
+    cairo_move_to(cr, 5, -29);
+    cairo_line_to(cr, 4, -52);
+    cairo_line_to(cr, 17, -52);
+    cairo_line_to(cr, 24, -31);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+
+    // Deck/hull seam lines.
+    setc(cr, {0.02, 0.055, 0.105, 1.0});
+    cairo_set_line_width(cr, 3.0);
+    cairo_move_to(cr, -44, 9);
+    cairo_curve_to(cr, -25, 4, -12, 1, 0, 0);
+    cairo_curve_to(cr, 12, 1, 25, 4, 44, 9);
+    cairo_stroke(cr);
+
+    cairo_move_to(cr, -28, 28);
+    cairo_curve_to(cr, -12, 24, 12, 24, 28, 28);
+    cairo_stroke(cr);
+
+    // Centerline and mast/index line.
+    setc(cr, c);
+    cairo_set_line_width(cr, 3.2);
+    cairo_move_to(cr, 0, -74);
+    cairo_line_to(cr, 0, 52);
+    cairo_stroke(cr);
+
+    // Small roof top line to make the icon less boxy.
+    cairo_set_line_width(cr, 3.0);
+    cairo_move_to(cr, -18, -62);
+    cairo_curve_to(cr, -9, -68, 9, -68, 18, -62);
+    cairo_stroke(cr);
+
+    cairo_restore(cr);
 }
 
 void draw_pitch_icon(cairo_t* cr, double x, double y, double scale, Color c) {
