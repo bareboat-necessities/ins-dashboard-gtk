@@ -14,6 +14,9 @@ struct InsData {
     double heave_vel_mps = 0.11;
     double rot_deg_min = 8.4;
     double wave_rel_deg = 45.0;
+    double wave_rel_mag_deg = 45.0;
+    int wave_sign = 1;
+    int wave_polarity = 1;
     double wave_conf_pct = 78.0;
     double hs_m = 0.72;
     double tp_s = 4.8;

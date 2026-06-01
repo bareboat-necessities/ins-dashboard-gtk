@@ -33,6 +33,11 @@ void draw_status_row(cairo_t* cr, int idx, const std::string& label, const std::
     text(cr, value, 625, y + 34, 34, vc, "bold", 0, 0.5);
 }
 
+double signed_relative_degrees(double deg) {
+    deg = wrap360(deg);
+    return deg > 180.0 ? deg - 360.0 : deg;
+}
+
 void draw_triangle(cairo_t* cr, double x, double y, double size, double angle, Color c) {
     cairo_save(cr);
     cairo_translate(cr, x, y);
@@ -121,7 +126,7 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
     text(cr, d.heave_vel_mps >= 0 ? "↑" : "↓", 500, 882, 64, GREEN, "bold", 0.5, 0.5);
     line(cr, 530, 845, 530, 910, LINE, 2);
     text(cr, "WAVES", 620, 862, 30, WHITE, "bold", 0, 0.5);
-    text(cr, fmt(d.wave_rel_deg, 0) + "°", 635, 900, 48, CYAN, "bold", 0, 0.5);
+    text(cr, fmt_signed(signed_relative_degrees(d.wave_rel_deg), 0) + "°", 635, 900, 48, CYAN, "bold", 0, 0.5);
     text(cr, rel_wave_name(d.wave_rel_deg), 780, 900, 28, WHITE, "bold", 0, 0.5);
     draw_check_pill(cr, 345, 940, 310, 45, d.system_status, status_color(d.system_status));
 }
@@ -251,7 +256,7 @@ void draw_wave(cairo_t* cr, const model::InsData& d) {
     draw_wave_icon(cr, sx - 35, sy - 35, 0.55, CYAN);
 
     fill_round(cr, 20, 825, 960, 140, 18, PANEL2, LINE, 2);
-    text(cr, fmt(d.wave_rel_deg, 0) + "°", 70, 895, 82, CYAN, "bold", 0, 0.5);
+    text(cr, fmt_signed(signed_relative_degrees(d.wave_rel_deg), 0) + "°", 70, 895, 82, CYAN, "bold", 0, 0.5);
     text(cr, "REL", 335, 912, 34, CYAN, "bold", 0, 0.5);
     line(cr, 500, 845, 500, 945, LINE, 2);
     draw_wave_icon(cr, 535, 875, 0.55, CYAN);
