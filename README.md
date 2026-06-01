@@ -63,6 +63,13 @@ On Windows, use a COM device path from the MSYS2 shell or `run.bat`:
 ./build/ins_gtk4_nmea.exe --source serial-nmea0183://COM9?baud=115200
 ```
 
+The source URI may also be passed as the first positional argument, which is useful
+when launching from shells or shortcuts that do not use `--source`:
+
+```bash
+./build/ins_gtk4_nmea.exe serial-nmea0183://COM9?baud=115200
+```
+
 ## Keyboard controls
 
 - `1` Helm / attitude
