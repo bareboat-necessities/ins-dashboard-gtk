@@ -215,7 +215,6 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
 void draw_heave(cairo_t* cr, const model::InsData& d, const HeaveHistory& hist, double now_s) {
     draw_background(cr);
     draw_title_bar(cr, "HEAVE", "VERTICAL MOTION", d.system_status);
-    draw_boat_wave_badge_icon(cr, 86, 58, 0.90, CYAN);
 
     draw_panel(cr, 30, 140, 940, 250);
     line(cr, 210, 165, 210, 360, {1, 1, 1, 0.10}, 2);
