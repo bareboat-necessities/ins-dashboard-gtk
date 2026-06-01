@@ -390,6 +390,10 @@ void draw_rot(cairo_t* cr, const model::InsData& d) {
     text_shadow(cr, "PORT", 78, 198, 38, RED, "bold", 0, 0.5);
     text_shadow(cr, "STBD", 815, 198, 38, GREEN, "bold", 0, 0.5);
 
+    constexpr double ROT_RPM_LIMIT = 2.0;
+    constexpr double ROT_RPM_TICK_STEP = 0.1;
+    constexpr double ROT_RPM_LABEL_STEP = 0.5;
+
     const double rot_rpm = d.rot_deg_min / 360.0;
     const double cx = 500, cy = 545, r = 390;
 
@@ -426,15 +430,18 @@ void draw_rot(cairo_t* cr, const model::InsData& d) {
     cairo_stroke(cr);
 
     // Tick marks and numeric labels.
-    for (int vi = -30; vi <= 30; ++vi) {
-        const double v = vi / 100.0;
-        const double angle = (-90.0 + (v / 0.30) * 90.0) * DEG;
+    const int tick_count = static_cast<int>(std::round(ROT_RPM_LIMIT / ROT_RPM_TICK_STEP));
+    const int label_interval = static_cast<int>(std::round(ROT_RPM_LABEL_STEP / ROT_RPM_TICK_STEP));
+    for (int vi = -tick_count; vi <= tick_count; ++vi) {
+        const double v = vi * ROT_RPM_TICK_STEP;
+        const bool labeled_tick = (vi % label_interval == 0);
+        const double angle = (-90.0 + (v / ROT_RPM_LIMIT) * 90.0) * DEG;
         const double outer = r - 18;
-        const double inner = outer - ((vi % 10 == 0) ? 30 : 14);
+        const double inner = outer - (labeled_tick ? 30 : 14);
         line(cr, cx + inner * std::cos(angle), cy + inner * std::sin(angle),
              cx + outer * std::cos(angle), cy + outer * std::sin(angle),
-             WHITE, (vi % 10 == 0) ? 2.4 : 1.4);
-        if (vi % 10 == 0) {
+             WHITE, labeled_tick ? 2.4 : 1.4);
+        if (labeled_tick) {
             const double tx = cx + (outer - 74) * std::cos(angle);
             const double ty = cy + (outer - 74) * std::sin(angle);
             std::string label = (vi == 0) ? "0" : fmt(std::abs(v), 1);
@@ -445,8 +452,8 @@ void draw_rot(cairo_t* cr, const model::InsData& d) {
     draw_triangle(cr, cx, cy - r - 4, 18, PI, CYAN);
 
     // Pointer as a filled needle polygon.
-    const double val = clampd(rot_rpm, -0.30, 0.30);
-    const double angle = (-90.0 + (val / 0.30) * 90.0) * DEG;
+    const double val = clampd(rot_rpm, -ROT_RPM_LIMIT, ROT_RPM_LIMIT);
+    const double angle = (-90.0 + (val / ROT_RPM_LIMIT) * 90.0) * DEG;
     const double tip_r = r - 100;
     cairo_save(cr);
     cairo_translate(cr, cx, cy);
