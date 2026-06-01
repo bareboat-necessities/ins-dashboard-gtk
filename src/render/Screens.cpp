@@ -31,15 +31,6 @@ void draw_triangle(cairo_t* cr, double x, double y, double size, double angle, C
     cairo_restore(cr);
 }
 
-double rot_rpm(double deg_min) {
-    return deg_min / 360.0;
-}
-
-std::string fmt_rpm(double deg_min) {
-    const double rpm = rot_rpm(deg_min);
-    return fmt_signed(rpm, std::abs(rpm) < 0.1 ? 3 : 2);
-}
-
 void draw_background(cairo_t* cr) {
     fill_round_gradient(cr, 8, 8, 984, 984, 24, {0.013, 0.030, 0.055, 1.0}, {0.010, 0.018, 0.035, 1.0}, {0.10, 0.16, 0.26, 1.0}, 2.0);
     for (int i = 0; i < 5; ++i) {
@@ -67,29 +58,43 @@ void draw_panel(cairo_t* cr, double x, double y, double w, double h, double r = 
     fill_round_gradient(cr, x, y, w, h, r, {0.030, 0.092, 0.155, 0.92}, {0.018, 0.055, 0.105, 0.92}, LINE, 2.0);
 }
 
-void draw_attitude_side_scales(cairo_t* cr, double cx, double cy, double r) {
-    for (int side = -1; side <= 1; side += 2) {
-        const double base_x = cx + side * (r + 55);
-        const double top_y = cy - 170;
-        line(cr, base_x, top_y, base_x, top_y + 340, {0.85, 0.90, 0.97, 0.35}, 2.0);
-        for (int k = -2; k <= 2; ++k) {
-            const double yy = cy + k * 85;
-            const double len = (k == 0) ? 26 : 18;
-            line(cr, base_x - side * len, yy, base_x, yy, WHITE, 2.0);
-            if (k != 0) {
-                text(cr, fmt(std::abs(k) * 30.0, 0), base_x + side * 30, yy, 22, WHITE, "bold", 0.5, 0.5);
-            } else {
-                text(cr, "0", base_x + side * 25, yy, 22, WHITE, "bold", 0.5, 0.5);
-            }
+void draw_curved_roll_scale(cairo_t* cr, double cx, double cy, double radius, int side) {
+    const double sx = cx + side * (radius + 58.0);
+    const double sy = cy;
+    const double arc_r = 108.0;
+    const double start = side < 0 ? (130.0 * DEG) : (50.0 * DEG);
+    const double end   = side < 0 ? (-130.0 * DEG) : (-50.0 * DEG);
+
+    setc(cr, {0.85, 0.90, 0.97, 0.45});
+    cairo_set_line_width(cr, 2.0);
+    cairo_arc_negative(cr, sx, sy, arc_r, start, end);
+    cairo_stroke(cr);
+
+    auto draw_segment = [&](double a1_deg, double a2_deg, Color c) {
+        setc(cr, c);
+        cairo_set_line_width(cr, 3.0);
+        if (side < 0) cairo_arc_negative(cr, sx, sy, arc_r, a1_deg * DEG, a2_deg * DEG);
+        else cairo_arc_negative(cr, sx, sy, arc_r, (180.0 - a1_deg) * DEG, (180.0 - a2_deg) * DEG);
+        cairo_stroke(cr);
+    };
+    draw_segment(130, 112, RED);
+    draw_segment(-112, -130, GREEN);
+
+    for (int k = -60; k <= 60; k += 5) {
+        const double frac = (k + 60.0) / 120.0;
+        const double ang = start + frac * (end - start);
+        const double inner = arc_r - ((k % 30 == 0) ? 18 : (k % 10 == 0 ? 12 : 7));
+        const double outer = arc_r + 2;
+        line(cr, sx + inner * std::cos(ang), sy + inner * std::sin(ang),
+             sx + outer * std::cos(ang), sy + outer * std::sin(ang),
+             WHITE, (k % 30 == 0) ? 2.2 : 1.3);
+        if (k % 30 == 0) {
+            const double tx = sx + (arc_r - 34) * std::cos(ang);
+            const double ty = sy + (arc_r - 34) * std::sin(ang);
+            text_shadow(cr, std::to_string(std::abs(k)), tx, ty, 21, WHITE, "bold", 0.5, 0.5);
         }
-        setc(cr, side < 0 ? RED : GREEN);
-        cairo_set_line_width(cr, 8);
-        cairo_arc(cr, base_x, cy - 132, 12, 0, 2 * PI);
-        cairo_fill(cr);
-        cairo_arc(cr, base_x, cy + 138, 12, 0, 2 * PI);
-        cairo_fill(cr);
-        draw_triangle(cr, base_x - side * 20, cy, 10, side < 0 ? PI / 2 : -PI / 2, WHITE);
     }
+    draw_triangle(cr, sx + side * 10.0, sy, 12, side < 0 ? PI / 2 : -PI / 2, WHITE);
 }
 
 void draw_status_row(cairo_t* cr, int idx, const std::string& label, const std::string& value, Color vc,
@@ -116,10 +121,10 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
     text_shadow(cr, fmt(d.heading_deg, 0) + "°", 185, 72, 72, CYAN, "bold", 0, 0.5);
     line(cr, 500, 28, 500, 112, {1, 1, 1, 0.12}, 2);
     text_shadow(cr, "ROT", 555, 72, 40, WHITE, "bold", 0, 0.5);
-    text_shadow(cr, fmt_rpm(d.rot_deg_min), 670, 72, 54, CYAN, "bold", 0, 0.5);
-    text(cr, "RPM", 875, 84, 28, CYAN, "bold", 0, 0.5);
+    text_shadow(cr, fmt_signed(d.rot_deg_min, 0) + "°", 682, 72, 72, CYAN, "bold", 0, 0.5);
+    text(cr, "/min", 850, 85, 32, CYAN, "bold", 0, 0.5);
 
-    const double cx = 500, cy = 400, r = 275;
+    const double cx = 500, cy = 405, r = 290;
     fill_circle_gradient(cr, cx, cy, r + 15, {0.03, 0.10, 0.19, 1.0}, {0.008, 0.018, 0.036, 1.0}, LINE, 5.0);
     fill_circle_gradient(cr, cx, cy, r, {0.02, 0.12, 0.24, 0.95}, {0.01, 0.03, 0.06, 0.95}, {0.18, 0.25, 0.34, 0.8}, 1.5);
 
@@ -158,28 +163,30 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
                         23, WHITE, "bold", 0.5, 0.5);
         }
     }
-    draw_attitude_side_scales(cr, cx, cy, r);
+    draw_curved_roll_scale(cr, cx, cy, r, -1);
+    draw_curved_roll_scale(cr, cx, cy, r, +1);
     draw_triangle(cr, cx, cy - r - 13, 16, PI, CYAN);
     draw_triangle(cr, cx, cy + r + 13, 16, 0, CYAN);
     draw_boat_front(cr, cx, cy + 8, 0.9, WHITE);
 
     draw_panel(cr, 25, 708, 465, 106);
     draw_panel(cr, 510, 708, 465, 106);
-    draw_roll_icon(cr, 105, 760, 1.0, CYAN);
-    draw_pitch_icon(cr, 590, 748, 0.95, CYAN);
+    draw_roll_icon(cr, 96, 756, 1.0, CYAN);
+    draw_pitch_icon(cr, 588, 748, 0.95, CYAN);
     text_shadow(cr, "ROLL", 180, 762, 32, WHITE, "bold", 0, 0.5);
     text_shadow(cr, fmt_signed(d.roll_deg, 1) + "°", 300, 762, 56, CYAN, "bold", 0, 0.5);
     text_shadow(cr, "PITCH", 655, 762, 32, WHITE, "bold", 0, 0.5);
     text_shadow(cr, fmt_signed(d.pitch_deg, 1) + "°", 795, 762, 56, CYAN, "bold", 0, 0.5);
 
     draw_panel(cr, 25, 830, 950, 95);
-    draw_wave_icon(cr, 80, 870, 0.55, CYAN);
+    draw_heave_icon(cr, 92, 868, 0.9, CYAN);
     text_shadow(cr, "HEAVE", 180, 880, 30, WHITE, "bold", 0, 0.5);
-    text_shadow(cr, fmt_signed(d.heave_m, 2), 300, 882, 52, GREEN, "bold", 0, 0.5);
-    text(cr, "m", 430, 886, 28, WHITE, "bold", 0, 0.5);
-    text_shadow(cr, d.heave_vel_mps >= 0 ? "↑" : "↓", 500, 882, 64, GREEN, "bold", 0.5, 0.5);
+    text_shadow(cr, fmt(d.heave_m, 2), 300, 882, 52, GREEN, "bold", 0, 0.5);
+    text(cr, "m", 420, 886, 28, WHITE, "bold", 0, 0.5);
+    text_shadow(cr, d.heave_vel_mps >= 0 ? "↑" : "↓", 498, 882, 64, GREEN, "bold", 0.5, 0.5);
     line(cr, 530, 845, 530, 910, {1, 1, 1, 0.10}, 2);
-    text_shadow(cr, "WAVES", 620, 862, 30, WHITE, "bold", 0, 0.5);
+    draw_wave_circle_icon(cr, 585, 878, 0.85, CYAN);
+    text_shadow(cr, "WAVES", 650, 862, 30, WHITE, "bold", 0, 0.5);
     text_shadow(cr, fmt(d.wave_rel_deg, 0) + "°", 635, 900, 48, CYAN, "bold", 0, 0.5);
     text(cr, rel_wave_name(d.wave_rel_deg), 780, 900, 28, WHITE, "bold", 0, 0.5);
     draw_check_pill(cr, 345, 940, 310, 45, d.system_status, status_color(d.system_status));
@@ -188,12 +195,11 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
 void draw_heave(cairo_t* cr, const model::InsData& d, const HeaveHistory& hist, double now_s) {
     draw_background(cr);
     draw_title_bar(cr, "HEAVE", "VERTICAL MOTION", d.system_status);
-    draw_wave_icon(cr, 58, 60, 0.7, CYAN);
+    draw_boat_wave_badge_icon(cr, 86, 58, 0.90, CYAN);
 
     draw_panel(cr, 30, 140, 940, 250);
     line(cr, 210, 165, 210, 360, {1, 1, 1, 0.10}, 2);
-    draw_wave_icon(cr, 70, 210, 0.8, CYAN);
-    text_shadow(cr, d.heave_vel_mps >= 0 ? "↑" : "↓", 118, 225, 72, CYAN, "bold", 0.5, 0.5);
+    draw_vertical_motion_icon(cr, 122, 260, 0.95, CYAN);
     text_shadow(cr, fmt_signed(d.heave_m, 2), 315, 255, 122, CYAN, "bold", 0, 0.5);
     text(cr, "m", 768, 282, 50, CYAN, "bold", 0, 0.5);
     text_shadow(cr, d.heave_vel_mps >= 0 ? "↑" : "↓", 885, 265, 105, GREEN, "bold", 0.5, 0.5);
@@ -258,11 +264,11 @@ void draw_heave(cairo_t* cr, const model::InsData& d, const HeaveHistory& hist, 
 
     draw_panel(cr, 30, 835, 455, 105);
     draw_panel(cr, 515, 835, 455, 105);
-    draw_wave_icon(cr, 65, 870, 0.42, CYAN);
+    draw_wave_circle_icon(cr, 86, 888, 0.82, CYAN);
     text_shadow(cr, "Hs", 180, 890, 32, WHITE, "bold", 0, 0.5);
     text_shadow(cr, fmt(d.hs_m, 2), 250, 892, 58, CYAN, "bold", 0, 0.5);
     text(cr, "m", 415, 898, 30, CYAN, "bold", 0, 0.5);
-    draw_compass_icon(cr, 560, 888, 0.50, CYAN);
+    draw_clock_icon(cr, 590, 888, 0.72, CYAN);
     text_shadow(cr, "Tp", 660, 890, 32, WHITE, "bold", 0, 0.5);
     text_shadow(cr, fmt(d.tp_s, 1), 750, 892, 58, CYAN, "bold", 0, 0.5);
     text(cr, "s", 895, 898, 30, CYAN, "bold", 0, 0.5);
@@ -272,7 +278,7 @@ void draw_wave(cairo_t* cr, const model::InsData& d) {
     draw_background(cr);
     draw_title_bar(cr, "WAVE DIRECTION", "RELATIVE TO VESSEL HEADING", "CONF " + fmt(d.wave_conf_pct, 0) + "%");
 
-    const double cx = 500, cy = 470, r = 280;
+    const double cx = 500, cy = 470, r = 300;
     fill_circle_gradient(cr, cx, cy, r + 12, {0.018, 0.07, 0.14, 1.0}, {0.008, 0.022, 0.040, 1.0}, LINE, 3.0);
     dashed_circle(cr, cx, cy, 220, {0.12, 0.72, 1.0, 0.36}, 1.5, 6, 7);
     dashed_circle(cr, cx, cy, 160, {0.12, 0.72, 1.0, 0.30}, 1.4, 5, 6);
@@ -303,84 +309,118 @@ void draw_wave(cairo_t* cr, const model::InsData& d) {
     draw_boat_top(cr, cx, cy, 0.95, WHITE);
 
     const double theta = (d.wave_rel_deg - 90.0) * DEG;
-    const double sx = cx + 210 * std::cos(theta);
-    const double sy = cy + 210 * std::sin(theta);
-    const double ex = cx + 85 * std::cos(theta);
-    const double ey = cy + 85 * std::sin(theta);
-    glow_line(cr, sx, sy, ex, ey, CYAN, 10, 18.0);
-    const double ah = 22;
-    const double dir = std::atan2(ey - sy, ex - sx);
-    setc(cr, CYAN);
-    cairo_move_to(cr, ex, ey);
-    cairo_line_to(cr, ex - ah * std::cos(dir - 0.45), ey - ah * std::sin(dir - 0.45));
-    cairo_line_to(cr, ex - ah * std::cos(dir + 0.45), ey - ah * std::sin(dir + 0.45));
-    cairo_close_path(cr);
-    cairo_fill(cr);
-    draw_wave_icon(cr, sx - 35, sy - 35, 0.55, CYAN);
+    const double icon_x = cx + 170 * std::cos(theta);
+    const double icon_y = cy + 170 * std::sin(theta);
+    cairo_save(cr);
+    cairo_translate(cr, icon_x, icon_y);
+    cairo_rotate(cr, theta + PI / 2.0);
+    draw_wave_from_icon(cr, 0, 0, 0.95, CYAN);
+    cairo_restore(cr);
 
     draw_panel(cr, 20, 825, 960, 140);
     text_shadow(cr, fmt(d.wave_rel_deg, 0) + "°", 70, 895, 82, CYAN, "bold", 0, 0.5);
     text(cr, "REL", 335, 912, 34, CYAN, "bold", 0, 0.5);
     line(cr, 500, 845, 500, 945, {1, 1, 1, 0.10}, 2);
-    draw_wave_icon(cr, 535, 875, 0.55, CYAN);
+    draw_wave_icon(cr, 535, 875, 0.62, CYAN);
     text_shadow(cr, "FROM", 650, 872, 32, WHITE, "bold", 0, 0.5);
     text_shadow(cr, rel_wave_name(d.wave_rel_deg), 650, 922, 50, CYAN, "bold", 0, 0.5);
 }
 
 void draw_rot(cairo_t* cr, const model::InsData& d) {
     draw_background(cr);
-    draw_title_bar(cr, "RATE OF TURN", "ROT IN REVOLUTIONS PER MINUTE");
-    text_shadow(cr, "PORT", 95, 215, 40, RED, "bold", 0, 0.5);
-    text_shadow(cr, "STBD", 810, 215, 40, GREEN, "bold", 0, 0.5);
 
-    const double cx = 500, cy = 560, r = 365;
-    setc(cr, {0.02, 0.17, 0.45, 0.85});
+    // Custom centered title bar closer to the design mockup.
+    fill_round_gradient(cr, 20, 20, 960, 88, 18, {0.020, 0.060, 0.115, 0.96}, {0.012, 0.030, 0.060, 0.96}, LINE, 2.0);
+    line(cr, 70, 64, 320, 64, {1, 1, 1, 0.10}, 2.0);
+    line(cr, 680, 64, 930, 64, {1, 1, 1, 0.10}, 2.0);
+    text_shadow(cr, "RATE OF TURN", 500, 60, 44, WHITE, "bold", 0.5, 0.5);
+
+    text_shadow(cr, "PORT", 78, 198, 38, RED, "bold", 0, 0.5);
+    text_shadow(cr, "STBD", 815, 198, 38, GREEN, "bold", 0, 0.5);
+
+    const double rot_rpm = d.rot_deg_min / 360.0;
+    const double cx = 500, cy = 545, r = 390;
+
+    // Main semicircular gauge body - close across the diameter, not to the center.
+    cairo_new_path(cr);
     cairo_arc(cr, cx, cy, r, PI, 2 * PI);
-    cairo_line_to(cr, cx, cy);
     cairo_close_path(cr);
+    cairo_pattern_t* pat = cairo_pattern_create_radial(cx, cy + 40, 40, cx, cy + 10, r + 20);
+    cairo_pattern_add_color_stop_rgba(pat, 0.0, 0.05, 0.23, 0.55, 0.96);
+    cairo_pattern_add_color_stop_rgba(pat, 1.0, 0.01, 0.06, 0.16, 0.98);
+    cairo_set_source(cr, pat);
     cairo_fill_preserve(cr);
-    setc(cr, LINE);
-    cairo_set_line_width(cr, 4);
+    cairo_pattern_destroy(pat);
+    setc(cr, {0.18, 0.24, 0.34, 0.85});
+    cairo_set_line_width(cr, 3.5);
     cairo_stroke(cr);
 
-    // Gauge scale is shown in RPM; internal model remains deg/min.  ±0.20 RPM = ±72 deg/min.
-    for (int i = -20; i <= 20; ++i) {
-        const double rpm = i * 0.01;
-        const double angle = (-90 + (rpm / 0.20) * 90.0) * DEG;
-        const bool major = (i % 10 == 0);
-        const bool mid = (i % 5 == 0);
-        const double inner = r - (major ? 52 : (mid ? 38 : 25));
-        Color cc = WHITE;
-        if (i <= -18) cc = RED;
-        if (i >= 18) cc = GREEN;
+    // Inner blue rim.
+    setc(cr, {0.04, 0.62, 1.0, 0.95});
+    cairo_set_line_width(cr, 4.0);
+    cairo_arc(cr, cx, cy, r - 18, PI, 2 * PI);
+    cairo_stroke(cr);
+
+    // Colored edge bands.
+    setc(cr, RED);
+    cairo_set_line_width(cr, 6.0);
+    cairo_arc(cr, cx, cy, r - 26, 1.03 * PI, 1.18 * PI);
+    cairo_stroke(cr);
+    setc(cr, GREEN);
+    cairo_arc(cr, cx, cy, r - 26, -0.18 * PI, -0.03 * PI);
+    cairo_stroke(cr);
+
+    // Tick marks and numeric labels.
+    for (int vi = -30; vi <= 30; ++vi) {
+        const double v = vi / 100.0;
+        const double angle = (-90.0 + (v / 0.30) * 90.0) * DEG;
+        const double outer = r - 18;
+        const double inner = outer - ((vi % 10 == 0) ? 30 : 14);
         line(cr, cx + inner * std::cos(angle), cy + inner * std::sin(angle),
-             cx + r * std::cos(angle), cy + r * std::sin(angle), cc, mid ? 2.6 : 1.4);
-        if (major) {
-            const double tx = cx + (inner - 44) * std::cos(angle);
-            const double ty = cy + (inner - 44) * std::sin(angle);
-            text_shadow(cr, i == 0 ? "0" : fmt(std::abs(rpm), 2), tx, ty, 25, WHITE, "bold", 0.5, 0.5);
+             cx + outer * std::cos(angle), cy + outer * std::sin(angle),
+             WHITE, (vi % 10 == 0) ? 2.4 : 1.4);
+        if (vi % 10 == 0) {
+            const double tx = cx + (outer - 74) * std::cos(angle);
+            const double ty = cy + (outer - 74) * std::sin(angle);
+            std::string label = (vi == 0) ? "0" : fmt(std::abs(v), 1);
+            text_shadow(cr, label, tx, ty, vi == 0 ? 34 : 24, WHITE, "bold", 0.5, 0.5);
         }
     }
-    text_shadow(cr, "RPM", cx, cy - 235, 34, CYAN, "bold", 0.5, 0.5);
+    text_shadow(cr, "RPM", cx, cy - 220, 34, CYAN, "bold", 0.5, 0.5);
+    draw_triangle(cr, cx, cy - r - 4, 18, PI, CYAN);
 
-    const double val_rpm = clampd(rot_rpm(d.rot_deg_min), -0.20, 0.20);
-    const double angle = (-90 + (val_rpm / 0.20) * 90.0) * DEG;
-    const double nx = cx + (r - 100) * std::cos(angle);
-    const double ny = cy + (r - 100) * std::sin(angle);
-    glow_line(cr, cx, cy, nx, ny, WHITE, 8, 16.0);
-    setc(cr, {0.08, 0.12, 0.18, 1});
-    cairo_arc(cr, cx, cy, 42, 0, 2 * PI);
-    cairo_fill_preserve(cr);
-    setc(cr, LINE);
-    cairo_set_line_width(cr, 2);
-    cairo_stroke(cr);
+    // Pointer as a filled needle polygon.
+    const double val = clampd(rot_rpm, -0.30, 0.30);
+    const double angle = (-90.0 + (val / 0.30) * 90.0) * DEG;
+    const double tip_r = r - 100;
+    cairo_save(cr);
+    cairo_translate(cr, cx, cy);
+    cairo_rotate(cr, angle + PI / 2.0);
+    setc(cr, {1.0, 1.0, 1.0, 0.18});
+    cairo_move_to(cr, -12, 0);
+    cairo_line_to(cr, 12, 0);
+    cairo_line_to(cr, 8, -tip_r + 14);
+    cairo_line_to(cr, -8, -tip_r + 14);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+    setc(cr, {0.95, 0.96, 0.98, 0.98});
+    cairo_move_to(cr, -10, 0);
+    cairo_line_to(cr, 10, 0);
+    cairo_line_to(cr, 9, -tip_r);
+    cairo_line_to(cr, -9, -tip_r + 8);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+    cairo_restore(cr);
+
+    fill_circle_gradient(cr, cx, cy, 46, {0.14, 0.18, 0.28, 1.0}, {0.07, 0.09, 0.14, 1.0}, LINE, 2.0);
+    fill_circle_gradient(cr, cx, cy, 34, {0.18, 0.22, 0.34, 1.0}, {0.10, 0.13, 0.20, 1.0}, {0.25, 0.35, 0.50, 0.6}, 1.0);
 
     draw_panel(cr, 50, 610, 900, 135);
-    text_shadow(cr, fmt_rpm(d.rot_deg_min), 135, 680, 78, CYAN, "bold", 0, 0.5);
-    text(cr, "RPM", 470, 695, 42, CYAN, "bold", 0, 0.5);
+    text_shadow(cr, fmt_signed(rot_rpm, 3), 118, 680, 82, CYAN, "bold", 0, 0.5);
+    text(cr, "RPM", 430, 693, 42, CYAN, "bold", 0, 0.5);
     line(cr, 625, 635, 625, 720, {1, 1, 1, 0.10}, 2);
     text_shadow(cr, "TURNING", 700, 656, 35, WHITE, "bold", 0, 0.5);
-    text_shadow(cr, d.rot_deg_min >= 0 ? "STBD" : "PORT", 700, 705, 55, d.rot_deg_min >= 0 ? GREEN : RED, "bold", 0, 0.5);
+    text_shadow(cr, rot_rpm >= 0 ? "STBD" : "PORT", 700, 705, 55, rot_rpm >= 0 ? GREEN : RED, "bold", 0, 0.5);
 
     draw_panel(cr, 50, 765, 900, 105);
     text_shadow(cr, "HDG TREND", 70, 815, 28, WHITE, "bold", 0, 0.5);
@@ -405,8 +445,7 @@ void draw_status(cairo_t* cr, const model::InsData& d) {
 
     draw_status_row(cr, 0, "ATTITUDE", d.attitude_status, status_color(d.attitude_status), draw_attitude_icon);
     draw_status_row(cr, 1, "HEAVE", d.heave_status, status_color(d.heave_status), [](cairo_t* cr, double x, double y, double s, Color c) {
-        draw_wave_icon(cr, x - 26 * s, y - 10 * s, 0.45 * s, c);
-        text(cr, "↑", x + 12 * s, y - 2 * s, 34 * s, c, "bold", 0.5, 0.5);
+        draw_heave_status_icon(cr, x, y, 0.75 * s, c);
     });
     draw_status_row(cr, 2, "WAVE DIR", d.wave_status, status_color(d.wave_status), draw_compass_icon);
     draw_status_row(cr, 3, "MAG", d.mag_status, status_color(d.mag_status), draw_magnet_icon);

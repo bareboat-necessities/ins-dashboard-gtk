@@ -3,293 +3,335 @@
 #include "render/DrawUtil.h"
 #include "util/MathUtil.h"
 
-#include <cmath>
-
 namespace ins_display::render {
-
-namespace {
-void chevron(cairo_t* cr, double x, double y, double s, double rot, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, x, y);
-    cairo_rotate(cr, rot);
-    setc(cr, c);
-    cairo_move_to(cr, 0, -14 * s);
-    cairo_line_to(cr, -10 * s, 10 * s);
-    cairo_line_to(cr, 0, 5 * s);
-    cairo_line_to(cr, 10 * s, 10 * s);
-    cairo_close_path(cr);
-    cairo_fill(cr);
-    cairo_restore(cr);
-}
-} // namespace
 
 void draw_wave_icon(cairo_t* cr, double x, double y, double scale, Color c) {
     setc(cr, c);
-    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-    cairo_set_line_width(cr, 3.2 * scale);
+    cairo_set_line_width(cr, 3.0 * scale);
     for (int k = 0; k < 3; ++k) {
         const double yy = y + k * 12 * scale;
         cairo_move_to(cr, x, yy);
-        for (int i = 0; i < 3; ++i) {
-            cairo_rel_curve_to(cr, 9 * scale, -9 * scale, 18 * scale, -9 * scale, 27 * scale, 0);
-            cairo_rel_curve_to(cr, 9 * scale, 9 * scale, 18 * scale, 9 * scale, 27 * scale, 0);
+        for (int i = 0; i < 4; ++i) {
+            cairo_rel_curve_to(cr, 7 * scale, -8 * scale, 15 * scale, -8 * scale, 22 * scale, 0);
+            cairo_rel_curve_to(cr, 7 * scale, 8 * scale, 15 * scale, 8 * scale, 22 * scale, 0);
         }
         cairo_stroke(cr);
     }
-    cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
+}
+
+void draw_wave_circle_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    cairo_set_line_width(cr, 3.2 * scale);
+    cairo_arc(cr, x, y, 34 * scale, 0, 2 * util::PI);
+    cairo_stroke(cr);
+    draw_wave_icon(cr, x - 22 * scale, y - 8 * scale, 0.32 * scale, c);
+}
+
+void draw_wave_from_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    draw_wave_icon(cr, x - 34 * scale, y - 26 * scale, 0.40 * scale, c);
+    const double x1 = x - 8 * scale;
+    const double y1 = y + 8 * scale;
+    const double x2 = x - 86 * scale;
+    const double y2 = y + 82 * scale;
+    glow_line(cr, x1, y1, x2, y2, c, 7.5 * scale, 12.0 * scale);
+    const double dir = std::atan2(y2 - y1, x2 - x1);
+    const double ah = 18 * scale;
+    setc(cr, c);
+    cairo_move_to(cr, x2, y2);
+    cairo_line_to(cr, x2 - ah * std::cos(dir - 0.48), y2 - ah * std::sin(dir - 0.48));
+    cairo_line_to(cr, x2 - ah * std::cos(dir + 0.48), y2 - ah * std::sin(dir + 0.48));
+    cairo_close_path(cr);
+    cairo_fill(cr);
+}
+
+void draw_boat_wave_badge_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    cairo_save(cr);
+    cairo_translate(cr, x, y);
+    setc(cr, c);
+    cairo_set_line_width(cr, 3.0 * scale);
+    cairo_move_to(cr, -18 * scale, -2 * scale);
+    cairo_curve_to(cr, -13 * scale, -15 * scale, 13 * scale, -15 * scale, 18 * scale, -2 * scale);
+    cairo_line_to(cr, 13 * scale, 12 * scale);
+    cairo_line_to(cr, -13 * scale, 12 * scale);
+    cairo_close_path(cr);
+    cairo_stroke_preserve(cr);
+    setc(cr, {c.r, c.g, c.b, 0.10});
+    cairo_fill(cr);
+    setc(cr, c);
+    line(cr, -10 * scale, -18 * scale, -8 * scale, -4 * scale, c, 3.0 * scale);
+    line(cr, -8 * scale, -18 * scale, 10 * scale, -18 * scale, c, 3.0 * scale);
+    line(cr, 10 * scale, -18 * scale, 12 * scale, -4 * scale, c, 3.0 * scale);
+    cairo_restore(cr);
+    draw_wave_icon(cr, x - 34 * scale, y + 24 * scale, 0.36 * scale, c);
+}
+
+void draw_vertical_motion_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    line(cr, x, y - 88 * scale, x, y - 40 * scale, c, 4.0 * scale);
+    cairo_move_to(cr, x, y - 102 * scale);
+    cairo_line_to(cr, x - 14 * scale, y - 80 * scale);
+    cairo_line_to(cr, x + 14 * scale, y - 80 * scale);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+    for (int i = 0; i < 5; ++i) {
+        const double yy = y - 64 * scale + i * 10 * scale;
+        line(cr, x - 14 * scale, yy, x + 14 * scale, yy, c, 3.0 * scale);
+    }
+    draw_wave_icon(cr, x - 38 * scale, y - 6 * scale, 0.34 * scale, c);
+    for (int i = 0; i < 4; ++i) {
+        const double yy = y + 30 * scale + i * 10 * scale;
+        line(cr, x - 12 * scale, yy, x + 12 * scale, yy, c, 3.0 * scale);
+    }
+    line(cr, x, y + 70 * scale, x, y + 104 * scale, c, 4.0 * scale);
+    cairo_move_to(cr, x, y + 118 * scale);
+    cairo_line_to(cr, x - 14 * scale, y + 96 * scale);
+    cairo_line_to(cr, x + 14 * scale, y + 96 * scale);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+}
+
+void draw_heave_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    cairo_set_line_width(cr, 4.0 * scale);
+    line(cr, x, y + 30 * scale, x, y - 28 * scale, c, 4.0 * scale);
+    cairo_move_to(cr, x, y - 38 * scale);
+    cairo_line_to(cr, x - 12 * scale, y - 20 * scale);
+    cairo_line_to(cr, x + 12 * scale, y - 20 * scale);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+    draw_wave_icon(cr, x - 42 * scale, y + 12 * scale, 0.38 * scale, c);
+}
+
+void draw_heave_status_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    line(cr, x, y - 30 * scale, x, y - 2 * scale, c, 3.2 * scale);
+    cairo_move_to(cr, x, y - 42 * scale);
+    cairo_line_to(cr, x - 10 * scale, y - 24 * scale);
+    cairo_line_to(cr, x + 10 * scale, y - 24 * scale);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+    draw_wave_icon(cr, x - 30 * scale, y - 6 * scale, 0.28 * scale, c);
+    line(cr, x, y + 18 * scale, x, y + 28 * scale, c, 2.4 * scale);
 }
 
 void draw_boat_top(cairo_t* cr, double cx, double cy, double scale, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, cx, cy);
-    cairo_scale(cr, scale, scale);
-
-    // Soft cyan halo, then a clean white hull. This matches the mockup better than the old wireframe boat.
-    setc(cr, {CYAN.r, CYAN.g, CYAN.b, 0.12});
-    cairo_move_to(cr, 0, -82);
-    cairo_curve_to(cr, -48, -40, -44, 48, -28, 75);
-    cairo_line_to(cr, 28, 75);
-    cairo_curve_to(cr, 44, 48, 48, -40, 0, -82);
-    cairo_close_path(cr);
-    cairo_fill(cr);
-
     setc(cr, c);
-    cairo_set_line_width(cr, 4.5);
-    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
-    cairo_move_to(cr, 0, -78);
-    cairo_curve_to(cr, -42, -42, -42, 40, -26, 70);
-    cairo_line_to(cr, 26, 70);
-    cairo_curve_to(cr, 42, 40, 42, -42, 0, -78);
+    cairo_set_line_width(cr, 4.0 * scale);
+    cairo_move_to(cr, cx, cy - 70 * scale);
+    cairo_curve_to(cr, cx - 28 * scale, cy - 44 * scale, cx - 31 * scale, cy + 40 * scale, cx - 16 * scale, cy + 60 * scale);
+    cairo_line_to(cr, cx + 16 * scale, cy + 60 * scale);
+    cairo_curve_to(cr, cx + 31 * scale, cy + 40 * scale, cx + 28 * scale, cy - 44 * scale, cx, cy - 70 * scale);
     cairo_close_path(cr);
     cairo_stroke_preserve(cr);
-    setc(cr, {0.94, 0.97, 1.00, 0.13});
+    setc(cr, {0.97, 0.98, 0.99, 0.14});
     cairo_fill(cr);
 
-    rounded_rect(cr, -22, -22, 44, 42, 10);
-    setc(cr, {0.92, 0.96, 1.0, 0.95});
-    cairo_fill_preserve(cr);
-    setc(cr, c);
-    cairo_set_line_width(cr, 3.2);
-    cairo_stroke(cr);
+    rounded_rect(cr, cx - 18 * scale, cy - 10 * scale, 36 * scale, 72 * scale, 10 * scale);
+    cairo_stroke_preserve(cr);
+    setc(cr, {0.97, 0.98, 0.99, 0.10});
+    cairo_fill(cr);
 
-    line(cr, -15, -3, 15, -3, BG, 3.0);
-    line(cr, 0, -54, 0, 64, {0.86, 0.94, 1.0, 0.65}, 2.0);
-    line(cr, -25, 38, 25, 38, {0.86, 0.94, 1.0, 0.65}, 2.0);
-    cairo_restore(cr);
+    setc(cr, BG);
+    cairo_rectangle(cr, cx - 16 * scale, cy + 2 * scale, 32 * scale, 16 * scale);
+    cairo_fill(cr);
+
+    setc(cr, c);
+    line(cr, cx, cy - 64 * scale, cx, cy + 54 * scale, c, 2.0 * scale);
 }
 
 void draw_boat_front(cairo_t* cr, double cx, double cy, double scale, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, cx, cy);
-    cairo_scale(cr, scale, scale);
-
-    setc(cr, {CYAN.r, CYAN.g, CYAN.b, 0.10});
-    cairo_move_to(cr, -58, 24);
-    cairo_line_to(cr, -38, -34);
-    cairo_line_to(cr, 38, -34);
-    cairo_line_to(cr, 58, 24);
-    cairo_line_to(cr, 28, 56);
-    cairo_line_to(cr, -28, 56);
-    cairo_close_path(cr);
-    cairo_fill(cr);
-
     setc(cr, c);
-    cairo_set_line_width(cr, 4.5);
-    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
-    cairo_move_to(cr, -54, 24);
-    cairo_line_to(cr, -36, -30);
-    cairo_curve_to(cr, -18, -42, 18, -42, 36, -30);
-    cairo_line_to(cr, 54, 24);
-    cairo_line_to(cr, 26, 52);
-    cairo_line_to(cr, -26, 52);
+    cairo_set_line_width(cr, 4.0 * scale);
+    cairo_move_to(cr, cx - 50 * scale, cy + 18 * scale);
+    cairo_curve_to(cr, cx - 43 * scale, cy - 8 * scale, cx - 34 * scale, cy - 26 * scale, cx - 28 * scale, cy - 30 * scale);
+    cairo_line_to(cr, cx + 28 * scale, cy - 30 * scale);
+    cairo_curve_to(cr, cx + 34 * scale, cy - 26 * scale, cx + 43 * scale, cy - 8 * scale, cx + 50 * scale, cy + 18 * scale);
+    cairo_line_to(cr, cx + 28 * scale, cy + 44 * scale);
+    cairo_line_to(cr, cx - 28 * scale, cy + 44 * scale);
     cairo_close_path(cr);
     cairo_stroke_preserve(cr);
-    setc(cr, {0.94, 0.97, 1.0, 0.95});
+    setc(cr, {0.94, 0.96, 0.98, 0.95});
     cairo_fill(cr);
 
-    rounded_rect(cr, -26, -16, 52, 27, 8);
-    setc(cr, {0.08, 0.16, 0.25, 0.78});
-    cairo_fill_preserve(cr);
     setc(cr, c);
-    cairo_set_line_width(cr, 2.8);
-    cairo_stroke(cr);
-    line(cr, 0, -48, 0, 54, {0.0, 0.0, 0.0, 0.45}, 2.4);
-    cairo_restore(cr);
+    cairo_set_line_width(cr, 4.0 * scale);
+    line(cr, cx, cy - 52 * scale, cx, cy + 45 * scale, c, 3.2 * scale);
+    line(cr, cx - 2 * scale, cy - 42 * scale, cx - 34 * scale, cy - 34 * scale, c, 3.0 * scale);
+    line(cr, cx + 2 * scale, cy - 42 * scale, cx + 34 * scale, cy - 34 * scale, c, 3.0 * scale);
+    line(cr, cx - 2 * scale, cy - 16 * scale, cx - 40 * scale, cy - 10 * scale, c, 3.0 * scale);
+    line(cr, cx + 2 * scale, cy - 16 * scale, cx + 40 * scale, cy - 10 * scale, c, 3.0 * scale);
 }
 
 void draw_pitch_icon(cairo_t* cr, double x, double y, double scale, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, x, y);
-    cairo_scale(cr, scale, scale);
     setc(cr, c);
-    cairo_set_line_width(cr, 3.2);
-    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-    // profile boat
-    cairo_move_to(cr, -42, 11);
-    cairo_line_to(cr, 26, 11);
-    cairo_line_to(cr, 42, 25);
-    cairo_line_to(cr, -30, 25);
+    cairo_set_line_width(cr, 3.5 * scale);
+    cairo_move_to(cr, x - 34 * scale, y + 12 * scale);
+    cairo_curve_to(cr, x - 20 * scale, y - 2 * scale, x + 20 * scale, y - 2 * scale, x + 34 * scale, y + 12 * scale);
+    cairo_line_to(cr, x + 26 * scale, y + 26 * scale);
+    cairo_line_to(cr, x - 26 * scale, y + 26 * scale);
     cairo_close_path(cr);
     cairo_stroke(cr);
-    line(cr, -6, 9, -6, -42, c, 3.2);
-    chevron(cr, -6, -44, 1.0, 0, c);
-    line(cr, 18, -34, 18, 4, {c.r, c.g, c.b, 0.60}, 2.0);
-    draw_wave_icon(cr, -47, 41, 0.36, c);
-    cairo_restore(cr);
+    line(cr, x, y + 10 * scale, x, y - 42 * scale, c, 3.6 * scale);
+    cairo_move_to(cr, x, y - 52 * scale);
+    cairo_line_to(cr, x - 10 * scale, y - 34 * scale);
+    cairo_line_to(cr, x + 10 * scale, y - 34 * scale);
+    cairo_close_path(cr);
+    cairo_fill(cr);
+    setc(cr, c);
+    cairo_arc(cr, x, y + 29 * scale, 3.8 * scale, 0, 2 * util::PI);
+    cairo_fill(cr);
 }
 
 void draw_roll_icon(cairo_t* cr, double x, double y, double scale, Color c) {
     cairo_save(cr);
     cairo_translate(cr, x, y);
-    cairo_scale(cr, scale, scale);
     cairo_rotate(cr, -16.0 * util::DEG);
     setc(cr, c);
-    cairo_set_line_width(cr, 3.4);
-    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
-    cairo_move_to(cr, -34, 8);
-    cairo_line_to(cr, 28, 8);
-    cairo_line_to(cr, 38, 21);
-    cairo_line_to(cr, -25, 21);
+    cairo_set_line_width(cr, 3.5 * scale);
+    cairo_move_to(cr, -30 * scale, 10 * scale);
+    cairo_curve_to(cr, -16 * scale, -6 * scale, 16 * scale, -6 * scale, 30 * scale, 10 * scale);
+    cairo_line_to(cr, 22 * scale, 24 * scale);
+    cairo_line_to(cr, -22 * scale, 24 * scale);
     cairo_close_path(cr);
     cairo_stroke(cr);
     cairo_restore(cr);
-    draw_wave_icon(cr, x - 48 * scale, y + 36 * scale, 0.36 * scale, c);
+    draw_wave_icon(cr, x - 40 * scale, y + 28 * scale, 0.32 * scale, c);
     setc(cr, c);
-    cairo_set_line_width(cr, 3 * scale);
-    cairo_arc(cr, x + 30 * scale, y - 27 * scale, 20 * scale, -2.45, -0.35);
+    cairo_set_line_width(cr, 3.0 * scale);
+    cairo_arc(cr, x + 26 * scale, y - 24 * scale, 17 * scale, -2.4, -0.6);
     cairo_stroke(cr);
-    chevron(cr, x + 45 * scale, y - 42 * scale, 0.70 * scale, 1.0, c);
+    cairo_move_to(cr, x + 37 * scale, y - 31 * scale);
+    cairo_line_to(cr, x + 32 * scale, y - 18 * scale);
+    cairo_line_to(cr, x + 45 * scale, y - 21 * scale);
+    cairo_close_path(cr);
+    cairo_fill(cr);
 }
 
 void draw_attitude_icon(cairo_t* cr, double x, double y, double scale, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, x, y);
-    cairo_scale(cr, scale, scale);
     setc(cr, c);
-    cairo_set_line_width(cr, 3.2);
-    cairo_arc(cr, 0, 0, 30, 0, 2 * util::PI);
+    cairo_set_line_width(cr, 3.0 * scale);
+    cairo_arc(cr, x, y, 28 * scale, 0, 2 * util::PI);
     cairo_stroke(cr);
-    line(cr, -22, 3, 22, -3, c, 3.0);
-    line(cr, 0, -22, 0, 22, {c.r, c.g, c.b, 0.65}, 2.0);
-    cairo_move_to(cr, -12, 8);
-    cairo_line_to(cr, 0, -2);
-    cairo_line_to(cr, 12, 8);
-    cairo_stroke(cr);
-    cairo_restore(cr);
+    line(cr, x - 34 * scale, y, x + 34 * scale, y, c, 2.2 * scale);
+    line(cr, x - 22 * scale, y - 10 * scale, x - 22 * scale, y + 10 * scale, c, 1.7 * scale);
+    line(cr, x + 22 * scale, y - 10 * scale, x + 22 * scale, y + 10 * scale, c, 1.7 * scale);
+    line(cr, x, y + 16 * scale, x, y + 24 * scale, c, 2.0 * scale);
+    cairo_arc(cr, x, y, 5.0 * scale, 0, 2 * util::PI);
+    cairo_fill(cr);
+    cairo_move_to(cr, x, y - 26 * scale);
+    cairo_line_to(cr, x - 5.5 * scale, y - 14 * scale);
+    cairo_line_to(cr, x + 5.5 * scale, y - 14 * scale);
+    cairo_close_path(cr);
+    cairo_fill(cr);
 }
 
 void draw_compass_icon(cairo_t* cr, double x, double y, double scale, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, x, y);
-    cairo_scale(cr, scale, scale);
     setc(cr, c);
-    cairo_set_line_width(cr, 3.0);
-    cairo_arc(cr, 0, 0, 30, 0, 2 * util::PI);
+    cairo_set_line_width(cr, 3 * scale);
+    cairo_arc(cr, x, y, 28 * scale, 0, 2 * util::PI);
     cairo_stroke(cr);
-    for (int i = 0; i < 8; ++i) {
-        const double a = i * util::PI / 4.0;
-        line(cr, 23 * std::cos(a), 23 * std::sin(a), 29 * std::cos(a), 29 * std::sin(a), c, 2.0);
-    }
-    setc(cr, c);
-    cairo_move_to(cr, 0, -23);
-    cairo_line_to(cr, -9, 9);
-    cairo_line_to(cr, 0, 3);
-    cairo_line_to(cr, 9, 9);
+    text(cr, "N", x, y - 18 * scale, 16 * scale, c, "bold", 0.5, 0.5);
+    cairo_move_to(cr, x, y - 8 * scale);
+    cairo_line_to(cr, x - 11 * scale, y + 18 * scale);
+    cairo_line_to(cr, x, y + 10 * scale);
+    cairo_line_to(cr, x + 11 * scale, y + 18 * scale);
     cairo_close_path(cr);
-    cairo_stroke(cr);
-    cairo_restore(cr);
+    cairo_fill(cr);
 }
 
 void draw_magnet_icon(cairo_t* cr, double x, double y, double scale, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, x, y);
-    cairo_scale(cr, scale, scale);
     setc(cr, c);
-    cairo_set_line_width(cr, 5.0);
-    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-    cairo_arc(cr, 0, -2, 24, util::PI, 2 * util::PI);
+    cairo_set_line_width(cr, 5 * scale);
+    cairo_arc(cr, x, y, 22 * scale, util::PI, 2 * util::PI);
     cairo_stroke(cr);
-    line(cr, -24, -2, -24, 20, c, 5.0);
-    line(cr, 24, -2, 24, 20, c, 5.0);
-    line(cr, -32, 20, -16, 20, RED, 5.0);
-    line(cr, 16, 20, 32, 20, CYAN, 5.0);
-    cairo_restore(cr);
+    line(cr, x - 22 * scale, y, x - 22 * scale, y + 18 * scale, c, 5 * scale);
+    line(cr, x + 22 * scale, y, x + 22 * scale, y + 18 * scale, c, 5 * scale);
+    line(cr, x - 28 * scale, y + 18 * scale, x - 16 * scale, y + 18 * scale, RED, 5 * scale);
+    line(cr, x + 16 * scale, y + 18 * scale, x + 28 * scale, y + 18 * scale, CYAN, 5 * scale);
 }
 
 void draw_gyro_icon(cairo_t* cr, double x, double y, double scale, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, x, y);
-    cairo_scale(cr, scale, scale);
     setc(cr, c);
-    cairo_set_line_width(cr, 3.0);
-    cairo_arc(cr, 0, 0, 27, 0.25, 5.7);
+    cairo_set_line_width(cr, 2.8 * scale);
+    cairo_arc(cr, x, y + 2 * scale, 22 * scale, 0.15 * util::PI, 0.85 * util::PI);
     cairo_stroke(cr);
-    chevron(cr, 27, -14, 0.75, 0.95, c);
-    cairo_arc(cr, 0, 0, 13, 0, 2 * util::PI);
+    cairo_arc(cr, x, y + 2 * scale, 22 * scale, 1.15 * util::PI, 1.85 * util::PI);
     cairo_stroke(cr);
-    line(cr, -34, 0, -16, 0, {c.r, c.g, c.b, 0.55}, 2.2);
-    line(cr, 16, 0, 34, 0, {c.r, c.g, c.b, 0.55}, 2.2);
-    cairo_restore(cr);
+    cairo_arc(cr, x, y + 2 * scale, 30 * scale, 0.30 * util::PI, 0.70 * util::PI);
+    cairo_stroke(cr);
+    line(cr, x, y - 30 * scale, x, y + 30 * scale, c, 2.8 * scale);
+    cairo_move_to(cr, x - 8 * scale, y + 34 * scale);
+    cairo_line_to(cr, x, y + 24 * scale);
+    cairo_line_to(cr, x + 8 * scale, y + 34 * scale);
+    cairo_stroke(cr);
 }
 
 void draw_accel_icon(cairo_t* cr, double x, double y, double scale, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, x, y);
-    cairo_scale(cr, scale, scale);
     setc(cr, c);
-    cairo_set_line_width(cr, 3.0);
-    line(cr, -26, 0, 26, 0, c, 3.0);
-    line(cr, 0, 26, 0, -26, c, 3.0);
-    chevron(cr, 29, 0, 0.78, util::PI / 2, c);
-    chevron(cr, 0, -29, 0.78, 0, c);
-    cairo_arc(cr, 0, 0, 5, 0, 2 * util::PI);
+    cairo_arc(cr, x, y, 5.5 * scale, 0, 2 * util::PI);
     cairo_fill(cr);
-    cairo_restore(cr);
+    line(cr, x, y, x, y - 26 * scale, c, 2.8 * scale);
+    line(cr, x, y, x - 23 * scale, y + 16 * scale, c, 2.8 * scale);
+    line(cr, x, y, x + 23 * scale, y + 16 * scale, c, 2.8 * scale);
+    auto arrow = [&](double ex, double ey, double angle) {
+        cairo_move_to(cr, ex, ey);
+        cairo_line_to(cr, ex - 8 * scale * std::cos(angle - 0.6), ey - 8 * scale * std::sin(angle - 0.6));
+        cairo_line_to(cr, ex - 8 * scale * std::cos(angle + 0.6), ey - 8 * scale * std::sin(angle + 0.6));
+        cairo_close_path(cr);
+        cairo_fill(cr);
+    };
+    arrow(x, y - 26 * scale, -util::PI / 2.0);
+    arrow(x - 23 * scale, y + 16 * scale, util::PI - 0.60);
+    arrow(x + 23 * scale, y + 16 * scale, 0.60);
+}
+
+void draw_clock_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    setc(cr, c);
+    cairo_set_line_width(cr, 3.0 * scale);
+    cairo_arc(cr, x, y, 28 * scale, 0, 2 * util::PI);
+    cairo_stroke(cr);
+    for (int i = 0; i < 12; ++i) {
+        const double a = i * util::PI / 6.0 - util::PI / 2.0;
+        const double r1 = (i % 3 == 0) ? 18 * scale : 22 * scale;
+        const double r2 = 24 * scale;
+        line(cr, x + r1 * std::cos(a), y + r1 * std::sin(a), x + r2 * std::cos(a), y + r2 * std::sin(a), c, 2.0 * scale);
+    }
+    line(cr, x, y, x, y - 14 * scale, c, 3.0 * scale);
+    line(cr, x, y, x + 10 * scale, y - 2 * scale, c, 3.0 * scale);
+    cairo_arc(cr, x, y, 2.5 * scale, 0, 2 * util::PI);
+    cairo_fill(cr);
 }
 
 void draw_thermo_icon(cairo_t* cr, double x, double y, double scale, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, x, y);
-    cairo_scale(cr, scale, scale);
     setc(cr, c);
-    cairo_set_line_width(cr, 3.4);
-    rounded_rect(cr, -7, -31, 14, 43, 7);
-    cairo_stroke(cr);
-    cairo_arc(cr, 0, 17, 13, 0, 2 * util::PI);
+    cairo_set_line_width(cr, 3.5 * scale);
+    cairo_arc(cr, x, y + 14 * scale, 12 * scale, 0, 2 * util::PI);
     cairo_stroke_preserve(cr);
-    setc(cr, {c.r, c.g, c.b, 0.16});
+    setc(cr, {c.r, c.g, c.b, 0.15});
     cairo_fill(cr);
-    line(cr, 0, -22, 0, 12, c, 4.0);
-    cairo_restore(cr);
+    setc(cr, c);
+    rounded_rect(cr, x - 7 * scale, y - 28 * scale, 14 * scale, 42 * scale, 7 * scale);
+    cairo_stroke(cr);
+    line(cr, x, y - 22 * scale, x, y + 8 * scale, c, 4 * scale);
 }
 
 void draw_samplerate_icon(cairo_t* cr, double x, double y, double scale, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, x, y);
-    cairo_scale(cr, scale, scale);
     setc(cr, c);
-    cairo_set_line_width(cr, 3.0);
-    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-    cairo_move_to(cr, -36, 0);
-    cairo_rel_line_to(cr, 10, 0);
-    cairo_rel_line_to(cr, 8, -18);
-    cairo_rel_line_to(cr, 13, 36);
-    cairo_rel_line_to(cr, 13, -36);
-    cairo_rel_line_to(cr, 8, 18);
-    cairo_rel_line_to(cr, 14, 0);
+    cairo_set_line_width(cr, 3.0 * scale);
+    cairo_move_to(cr, x - 34 * scale, y + 8 * scale);
+    cairo_curve_to(cr, x - 24 * scale, y - 28 * scale, x - 10 * scale, y - 28 * scale, x, y + 8 * scale);
+    cairo_curve_to(cr, x + 10 * scale, y + 44 * scale, x + 24 * scale, y + 44 * scale, x + 34 * scale, y + 8 * scale);
     cairo_stroke(cr);
-    cairo_restore(cr);
 }
 
 void draw_bars_icon(cairo_t* cr, double x, double y, double scale, Color c) {
-    cairo_save(cr);
-    cairo_translate(cr, x, y);
-    cairo_scale(cr, scale, scale);
     setc(cr, c);
-    rounded_rect(cr, -26, 10, 11, 19, 3); cairo_fill(cr);
-    rounded_rect(cr, -8, -2, 11, 31, 3); cairo_fill(cr);
-    rounded_rect(cr, 10, -19, 11, 48, 3); cairo_fill(cr);
-    cairo_restore(cr);
+    line(cr, x - 28 * scale, y + 24 * scale, x + 28 * scale, y + 24 * scale, c, 2.4 * scale);
+    cairo_rectangle(cr, x - 22 * scale, y + 6 * scale, 5 * scale, 12 * scale);
+    cairo_rectangle(cr, x - 10 * scale, y - 2 * scale, 5 * scale, 20 * scale);
+    cairo_rectangle(cr, x + 2 * scale, y - 12 * scale, 5 * scale, 30 * scale);
+    cairo_rectangle(cr, x + 14 * scale, y - 24 * scale, 5 * scale, 42 * scale);
+    cairo_fill(cr);
 }
 
 } // namespace ins_display::render
