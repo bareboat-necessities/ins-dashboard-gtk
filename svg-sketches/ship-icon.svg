@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 128 128"
+  role="img"
+  aria-labelledby="title desc">
+  <title id="title">Forward-facing ship attitude icon</title>
+  <desc id="desc">A front-facing ship silhouette with cabin windows, bow, hull, and vertical centerline for attitude displays.</desc>
+
+  <g fill="none" stroke="#f8fbff" stroke-linecap="round" stroke-linejoin="round">
+    <!-- vertical attitude / keel reference line -->
+    <path d="M64 18v92" stroke-width="4"/>
+
+    <!-- cabin / bridge outline -->
+    <path
+      d="M42 70
+         L49 34
+         C50 30 54 27 59 27
+         H69
+         C74 27 78 30 79 34
+         L86 70"
+      stroke-width="6"/>
+
+    <!-- upper bridge roof -->
+    <path d="M51 38 H77" stroke-width="5"/>
+
+    <!-- front bridge windows -->
+    <path d="M47 54 C58 52 70 52 81 54" stroke-width="5"/>
+    <path d="M64 29 V70" stroke-width="4"/>
+
+    <!-- hull top / deck edge -->
+    <path d="M31 77 C41 80 52 82 64 82 C76 82 87 80 97 77" stroke-width="5"/>
+
+    <!-- filled bow / hull body -->
+    <path
+      d="M35 76
+         C44 72 54 70 64 70
+         C74 70 84 72 93 76
+         L86 100
+         C79 106 71 109 64 109
+         C57 109 49 106 42 100
+         Z"
+      fill="#f8fbff"
+      stroke-width="4"/>
+
+    <!-- dark bow crease lines to match instrument style -->
+    <path
+      d="M39 86
+         C47 83 56 81 64 81
+         C72 81 81 83 89 86"
+      stroke="#071b3a"
+      stroke-width="4"/>
+
+    <path d="M64 82 V109" stroke="#071b3a" stroke-width="3"/>
+
+    <!-- small lower bow angle accents -->
+    <path d="M49 97 C54 100 59 101 64 101" stroke="#071b3a" stroke-width="3"/>
+    <path d="M79 97 C74 100 69 101 64 101" stroke="#071b3a" stroke-width="3"/>
+  </g>
+</svg>
