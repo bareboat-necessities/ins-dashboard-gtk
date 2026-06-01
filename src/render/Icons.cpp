@@ -422,8 +422,14 @@ void draw_accel_icon(cairo_t* cr, double x, double y, double scale, Color c) {
 }
 
 void draw_clock_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    cairo_save(cr);
     setc(cr, c);
     cairo_set_line_width(cr, 3.0 * scale);
+
+    // Start clock arcs as independent paths. cairo_arc() connects to any
+    // existing current point, which can leave a straight-line artifact from
+    // the previously drawn clock hand into the center dot on the Heave screen.
+    cairo_new_path(cr);
     cairo_arc(cr, x, y, 28 * scale, 0, 2 * util::PI);
     cairo_stroke(cr);
     for (int i = 0; i < 12; ++i) {
@@ -434,8 +440,11 @@ void draw_clock_icon(cairo_t* cr, double x, double y, double scale, Color c) {
     }
     line(cr, x, y, x, y - 14 * scale, c, 3.0 * scale);
     line(cr, x, y, x + 10 * scale, y - 2 * scale, c, 3.0 * scale);
+
+    cairo_new_path(cr);
     cairo_arc(cr, x, y, 2.5 * scale, 0, 2 * util::PI);
     cairo_fill(cr);
+    cairo_restore(cr);
 }
 
 void draw_thermo_icon(cairo_t* cr, double x, double y, double scale, Color c) {
