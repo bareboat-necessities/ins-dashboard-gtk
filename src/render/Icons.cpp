@@ -144,52 +144,65 @@ void draw_boat_top(cairo_t* cr, double cx, double cy, double scale, Color c) {
 }
 
 void draw_boat_front(cairo_t* cr, double cx, double cy, double scale, Color c) {
-    const Color fill{0.96, 0.97, 0.99, 1.0};
+    const Color fill{c.r, c.g, c.b, 1.0};
+    const Color cutout{0.015, 0.050, 0.100, 1.0};
+    const double s = scale;
 
-    // Center mast / reference line.
-    line(cr, cx, cy - 58 * scale, cx, cy + 44 * scale, c, 3.2 * scale);
+    cairo_save(cr);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
 
-    // Upper cabin.
+    // A faint halo keeps the reference icon readable on both the blue sky and dark sea.
+    setc(cr, {c.r, c.g, c.b, 0.18});
+    cairo_set_line_width(cr, 8.0 * s);
+    cairo_move_to(cr, cx - 48 * s, cy + 6 * s);
+    cairo_line_to(cr, cx - 36 * s, cy + 36 * s);
+    cairo_line_to(cr, cx - 22 * s, cy + 48 * s);
+    cairo_line_to(cr, cx + 22 * s, cy + 48 * s);
+    cairo_line_to(cr, cx + 36 * s, cy + 36 * s);
+    cairo_line_to(cr, cx + 48 * s, cy + 6 * s);
+    cairo_stroke(cr);
+
+    // Windowed bridge, drawn as white frames so the horizon remains visible through it.
     setc(cr, c);
-    cairo_set_line_width(cr, 4.0 * scale);
-    cairo_move_to(cr, cx - 18 * scale, cy - 36 * scale);
-    cairo_line_to(cr, cx - 14 * scale, cy - 54 * scale);
-    cairo_line_to(cr, cx + 14 * scale, cy - 54 * scale);
-    cairo_line_to(cr, cx + 18 * scale, cy - 36 * scale);
-    cairo_close_path(cr);
-    cairo_stroke_preserve(cr);
+    cairo_set_line_width(cr, 4.8 * s);
+    cairo_move_to(cr, cx - 28 * s, cy + 6 * s);
+    cairo_line_to(cr, cx - 21 * s, cy - 28 * s);
+    cairo_line_to(cr, cx - 13 * s, cy - 52 * s);
+    cairo_curve_to(cr, cx - 8 * s, cy - 56 * s, cx + 8 * s, cy - 56 * s, cx + 13 * s, cy - 52 * s);
+    cairo_line_to(cr, cx + 21 * s, cy - 28 * s);
+    cairo_line_to(cr, cx + 28 * s, cy + 6 * s);
+    cairo_stroke(cr);
+
+    // Bridge tiers and mullions match the upright, front-facing vessel in the reference.
+    line(cr, cx - 22 * s, cy - 26 * s, cx + 22 * s, cy - 26 * s, c, 4.0 * s);
+    line(cr, cx - 26 * s, cy - 6 * s, cx + 26 * s, cy - 6 * s, c, 4.0 * s);
+    line(cr, cx, cy - 56 * s, cx, cy + 8 * s, c, 4.0 * s);
+    line(cr, cx - 15 * s, cy - 48 * s, cx - 19 * s, cy - 8 * s, c, 3.2 * s);
+    line(cr, cx + 15 * s, cy - 48 * s, cx + 19 * s, cy - 8 * s, c, 3.2 * s);
+
+    // Solid bow/hull with a slight V so it reads as a ship seen head-on, not a flat block.
     setc(cr, fill);
+    cairo_move_to(cr, cx - 52 * s, cy + 6 * s);
+    cairo_line_to(cr, cx - 36 * s, cy + 40 * s);
+    cairo_curve_to(cr, cx - 21 * s, cy + 49 * s, cx + 21 * s, cy + 49 * s, cx + 36 * s, cy + 40 * s);
+    cairo_line_to(cr, cx + 52 * s, cy + 6 * s);
+    cairo_line_to(cr, cx + 28 * s, cy - 5 * s);
+    cairo_line_to(cr, cx, cy + 2 * s);
+    cairo_line_to(cr, cx - 28 * s, cy - 5 * s);
+    cairo_close_path(cr);
     cairo_fill(cr);
 
-    // Middle bridge/deck.
-    setc(cr, c);
-    cairo_set_line_width(cr, 4.0 * scale);
-    cairo_move_to(cr, cx - 30 * scale, cy - 8 * scale);
-    cairo_line_to(cr, cx - 22 * scale, cy - 32 * scale);
-    cairo_line_to(cr, cx + 22 * scale, cy - 32 * scale);
-    cairo_line_to(cr, cx + 30 * scale, cy - 8 * scale);
-    cairo_close_path(cr);
-    cairo_stroke_preserve(cr);
-    setc(cr, fill);
-    cairo_fill(cr);
+    // Dark bow seams reproduce the cockpit/bow contour visible in the mockup.
+    line(cr, cx - 45 * s, cy + 11 * s, cx, cy + 21 * s, cutout, 2.6 * s);
+    line(cr, cx + 45 * s, cy + 11 * s, cx, cy + 21 * s, cutout, 2.6 * s);
+    line(cr, cx, cy + 2 * s, cx, cy + 44 * s, cutout, 2.4 * s);
 
-    // Lower hull.
-    setc(cr, c);
-    cairo_set_line_width(cr, 4.2 * scale);
-    cairo_move_to(cr, cx - 48 * scale, cy + 2 * scale);
-    cairo_line_to(cr, cx - 38 * scale, cy + 36 * scale);
-    cairo_line_to(cr, cx + 38 * scale, cy + 36 * scale);
-    cairo_line_to(cr, cx + 48 * scale, cy + 2 * scale);
-    cairo_line_to(cr, cx + 28 * scale, cy - 8 * scale);
-    cairo_line_to(cr, cx - 28 * scale, cy - 8 * scale);
-    cairo_close_path(cr);
-    cairo_stroke_preserve(cr);
-    setc(cr, fill);
-    cairo_fill(cr);
+    // Re-draw the central reference line on top, like the white centerline in the source art.
+    line(cr, cx, cy - 64 * s, cx, cy + 48 * s, c, 3.2 * s);
+    line(cr, cx - 36 * s, cy + 6 * s, cx + 36 * s, cy + 6 * s, c, 3.0 * s);
 
-    // Deck lines like the original mockup.
-    line(cr, cx - 24 * scale, cy - 18 * scale, cx + 24 * scale, cy - 18 * scale, c, 3.0 * scale);
-    line(cr, cx - 40 * scale, cy + 1 * scale,  cx + 40 * scale, cy + 1 * scale,  c, 3.0 * scale);
+    cairo_restore(cr);
 }
 
 void draw_pitch_icon(cairo_t* cr, double x, double y, double scale, Color c) {
