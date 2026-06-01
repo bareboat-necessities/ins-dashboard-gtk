@@ -18,6 +18,12 @@ using util::fmt_signed;
 using util::PI;
 using util::wrap360;
 
+constexpr double DEG_PER_REV = 360.0;
+
+double rot_rpm(double deg_per_minute) {
+    return deg_per_minute / DEG_PER_REV;
+}
+
 void draw_triangle(cairo_t* cr, double x, double y, double size, double angle, Color c) {
     cairo_save(cr);
     cairo_translate(cr, x, y);
@@ -107,8 +113,8 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
     text_shadow(cr, fmt(d.heading_deg, 0) + "°", 185, 72, 72, CYAN, "bold", 0, 0.5);
     line(cr, 500, 28, 500, 112, {1, 1, 1, 0.12}, 2);
     text_shadow(cr, "ROT", 555, 72, 40, WHITE, "bold", 0, 0.5);
-    text_shadow(cr, fmt_signed(d.rot_deg_min, 0) + "°", 682, 72, 72, CYAN, "bold", 0, 0.5);
-    text(cr, "/min", 850, 85, 32, CYAN, "bold", 0, 0.5);
+    text_shadow(cr, fmt_signed(rot_rpm(d.rot_deg_min), 3), 682, 72, 72, CYAN, "bold", 0, 0.5);
+    text(cr, "RPM", 870, 85, 32, CYAN, "bold", 0, 0.5);
 
     const double cx = 500, cy = 405, r = 290;
     fill_circle_gradient(cr, cx, cy, r + 15, {0.03, 0.10, 0.19, 1.0}, {0.008, 0.018, 0.036, 1.0}, LINE, 5.0);
@@ -118,7 +124,7 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
     cairo_arc(cr, cx, cy, r - 10, 0, 2 * PI);
     cairo_clip(cr);
     cairo_translate(cr, cx, cy);
-    cairo_rotate(-d.roll_deg * DEG);
+    cairo_rotate(cr, -d.roll_deg * DEG);
     const double pitch_px = clampd(d.pitch_deg, -25, 25) * 5.6;
     setc(cr, {0.035, 0.44, 0.92, 1.0});
     cairo_rectangle(cr, -r - 30, -r - 30 + pitch_px, 2 * r + 60, r + 30 - pitch_px);
@@ -345,10 +351,10 @@ void draw_rot(cairo_t* cr, const model::InsData& d) {
         if (v % 30 == 0) {
             const double tx = cx + (inner - 40) * std::cos(angle);
             const double ty = cy + (inner - 40) * std::sin(angle);
-            text_shadow(cr, std::to_string(std::abs(v)), tx, ty, 28, WHITE, "bold", 0.5, 0.5);
+            text_shadow(cr, fmt(std::abs(rot_rpm(v)), 2), tx, ty, 28, WHITE, "bold", 0.5, 0.5);
         }
     }
-    text_shadow(cr, "°/min", cx, cy - 235, 34, CYAN, "bold", 0.5, 0.5);
+    text_shadow(cr, "RPM", cx, cy - 235, 34, CYAN, "bold", 0.5, 0.5);
 
     const double val = clampd(d.rot_deg_min, -60, 60);
     const double angle = (-90 + val * 1.5) * DEG;
@@ -363,8 +369,8 @@ void draw_rot(cairo_t* cr, const model::InsData& d) {
     cairo_stroke(cr);
 
     draw_panel(cr, 50, 610, 900, 135);
-    text_shadow(cr, fmt_signed(d.rot_deg_min, 1) + "°", 150, 680, 82, CYAN, "bold", 0, 0.5);
-    text(cr, "/min", 485, 695, 44, CYAN, "bold", 0, 0.5);
+    text_shadow(cr, fmt_signed(rot_rpm(d.rot_deg_min), 3), 150, 680, 82, CYAN, "bold", 0, 0.5);
+    text(cr, "RPM", 485, 695, 44, CYAN, "bold", 0, 0.5);
     line(cr, 625, 635, 625, 720, {1, 1, 1, 0.10}, 2);
     text_shadow(cr, "TURNING", 700, 656, 35, WHITE, "bold", 0, 0.5);
     text_shadow(cr, d.rot_deg_min >= 0 ? "STBD" : "PORT", 700, 705, 55, d.rot_deg_min >= 0 ? GREEN : RED, "bold", 0, 0.5);
