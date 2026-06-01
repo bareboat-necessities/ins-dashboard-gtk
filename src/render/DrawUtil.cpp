@@ -55,6 +55,7 @@ void fill_round_gradient(cairo_t* cr, double x, double y, double w, double h, do
 
 void fill_circle_gradient(cairo_t* cr, double cx, double cy, double r, Color inner, Color outer,
                           Color stroke, double lw) {
+    cairo_new_path(cr);
     cairo_arc(cr, cx, cy, r, 0, 2 * util::PI);
     cairo_pattern_t* pat = cairo_pattern_create_radial(cx, cy, 0.0, cx, cy, r);
     cairo_pattern_add_color_stop_rgba(pat, 0.0, inner.r, inner.g, inner.b, inner.a);
@@ -92,6 +93,7 @@ void glow_line(cairo_t* cr, double x1, double y1, double x2, double y2, Color c,
 }
 
 void dashed_circle(cairo_t* cr, double cx, double cy, double r, Color c, double lw, double dash_on, double dash_off) {
+    cairo_new_path(cr);
     setc(cr, c);
     cairo_set_line_width(cr, lw);
     const double dashes[2] = {dash_on, dash_off};
@@ -125,6 +127,7 @@ void draw_check_pill(cairo_t* cr, double x, double y, double w, double h, const 
     fill_round_gradient(cr, x, y, w, h, h / 2.0, {0.05, 0.12, 0.08, 0.76}, {0.03, 0.08, 0.05, 0.76}, c, 2.0);
     const double cx = x + h * 0.50;
     const double cy = y + h * 0.50;
+    cairo_new_path(cr);
     setc(cr, c);
     cairo_arc(cr, cx, cy, h * 0.25, 0, 2 * util::PI);
     cairo_fill(cr);
