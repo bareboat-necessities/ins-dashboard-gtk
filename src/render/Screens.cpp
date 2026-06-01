@@ -60,28 +60,27 @@ void draw_panel(cairo_t* cr, double x, double y, double w, double h, double r = 
 
 
 void draw_curved_roll_scale(cairo_t* cr, double cx, double cy, double radius, int side) {
-    // Side roll scales from the original mockup: thin curved arcs outside
-    // the main attitude ball, with labels at 60/30/0/30/60.
-    const double sx = (side < 0) ? (cx - radius - 8.0) : (cx + radius + 8.0);
-    const double sy = cy;
-    const double ar = 108.0;
+    // Side roll scales share the same center as the boat/attitude ball, so
+    // their arches are concentric with the vessel symbol rather than being
+    // small, separate scales beside it.
+    const double ar = radius + 58.0;
 
     const double a0 = (side < 0) ? 2.22 : -1.08;
     const double a1 = (side < 0) ? 4.06 :  1.08;
 
     setc(cr, {0.85, 0.90, 0.97, 0.45});
     cairo_set_line_width(cr, 2.0);
-    cairo_arc(cr, sx, sy, ar, a0, a1);
+    cairo_arc(cr, cx, cy, ar, a0, a1);
     cairo_stroke(cr);
 
     setc(cr, RED);
     cairo_set_line_width(cr, 3.2);
-    cairo_arc(cr, sx, sy, ar, a0, a0 + 0.32);
+    cairo_arc(cr, cx, cy, ar, a0, a0 + 0.32);
     cairo_stroke(cr);
 
     setc(cr, GREEN);
     cairo_set_line_width(cr, 3.2);
-    cairo_arc(cr, sx, sy, ar, a1 - 0.32, a1);
+    cairo_arc(cr, cx, cy, ar, a1 - 0.32, a1);
     cairo_stroke(cr);
 
     auto tick_angle = [&](double deg) {
@@ -93,25 +92,25 @@ void draw_curved_roll_scale(cairo_t* cr, double cx, double cy, double radius, in
     for (int deg = -60; deg <= 60; deg += 5) {
         const double ang = tick_angle(static_cast<double>(deg));
         const double outer = ar;
-        const double inner = outer - ((deg % 30 == 0) ? 18.0 : (deg % 10 == 0 ? 11.0 : 6.0));
+        const double inner = outer - ((deg % 30 == 0) ? 20.0 : (deg % 10 == 0 ? 13.0 : 7.0));
 
         line(cr,
-             sx + inner * std::cos(ang), sy + inner * std::sin(ang),
-             sx + outer * std::cos(ang), sy + outer * std::sin(ang),
+             cx + inner * std::cos(ang), cy + inner * std::sin(ang),
+             cx + outer * std::cos(ang), cy + outer * std::sin(ang),
              WHITE,
              (deg % 30 == 0) ? 2.2 : 1.1);
 
         if (deg % 30 == 0) {
-            const double tx = sx + (ar - 34.0) * std::cos(ang);
-            const double ty = sy + (ar - 34.0) * std::sin(ang);
+            const double tx = cx + (ar - 40.0) * std::cos(ang);
+            const double ty = cy + (ar - 40.0) * std::sin(ang);
             text_shadow(cr, std::to_string(std::abs(deg)), tx, ty, 20, WHITE, "bold", 0.5, 0.5);
         }
     }
 
     const double ang0 = tick_angle(0.0);
     draw_triangle(cr,
-                  sx + (ar - 2.0) * std::cos(ang0),
-                  sy + (ar - 2.0) * std::sin(ang0),
+                  cx + (ar - 2.0) * std::cos(ang0),
+                  cy + (ar - 2.0) * std::sin(ang0),
                   12,
                   ang0 + ((side < 0) ? PI / 2.0 : -PI / 2.0),
                   WHITE);
