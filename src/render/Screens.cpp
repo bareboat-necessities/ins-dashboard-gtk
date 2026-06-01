@@ -584,7 +584,7 @@ void draw_status(cairo_t* cr, const model::InsData& d) {
     draw_background(cr);
     fill_round_gradient(cr, 20, 20, 960, 945, 18, {0.016, 0.034, 0.062, 0.96}, {0.010, 0.020, 0.042, 0.96}, LINE, 2);
     text_shadow(cr, "INS STATUS", 60, 75, 55, WHITE, "bold", 0, 0.5);
-    draw_check_pill(cr, 590, 42, 350, 60, "SYSTEM HEALTHY", GREEN);
+    draw_check_pill(cr, 590, 42, 350, 60, d.system_status, status_color(d.system_status));
 
     draw_status_row(cr, 0, "ATTITUDE", d.attitude_status, status_color(d.attitude_status), draw_attitude_icon);
     draw_status_row(cr, 1, "HEAVE", d.heave_status, status_color(d.heave_status), draw_heave_status_icon);

@@ -91,8 +91,13 @@ types:
   - `A,<degrees>,D,PTCH`: pitch
   - `A,<degrees>,D,ROLL`: roll
   - `D,<metres>,M,DRT1`: real-time heave displacement in metres; the Heave screen derives vertical speed from successive heave samples when the stream does not provide vertical speed
+  - `V,<metres_per_second>,M,VHSPD`: vertical heave speed in metres per second, up-positive
+  - `C,<degrees_celsius>,C,IMUT`: IMU chip temperature
 - `IITXT,01,01,00,WAVSGN=<sign> POL=<polarity>`: optional wave-direction
   sign metadata applied to the latest and subsequent `WAVAXIS`/`WAVDIR` magnitudes
+- `IITXT,01,01,00,WAVCONF=<percent>`: wave-direction estimate confidence displayed on the Wave screen
+- `IITXT,01,01,00,ATT=<Y/N> HEV=<Y/N> MAG=<Y/N> GB=<Y/N> AB=<Y/N> IHz=<hz> MHz=<hz>`:
+  INS status flags for attitude, heave, magnetic lock, gyro-bias learning, accel-bias estimating, IMU sample rate, and magnetometer sample rate
 - `IIROT,<degrees_per_minute>,A`: valid rate of turn
 - `IIHDM,<degrees>,M`: magnetic heading
 
@@ -102,9 +107,13 @@ Example stream:
 $IIXDR,A,1.8,D,PTCH*63
 $IIXDR,A,0.9,D,ROLL*71
 $IIXDR,D,0.0132,M,DRT1*2A
+$IIXDR,V,-0.045,M,VHSPD*0E
 $IIXDR,A,25.8,D,WAVAXIS*19
 $IIXDR,A,25.8,D,WAVDIR*45
 $IITXT,01,01,00,WAVSGN=1 POL=1*31
+$IITXT,01,01,00,WAVCONF=82*2B
+$IIXDR,C,31.5,C,IMUT*52
+$IITXT,01,01,00,ATT=Y HEV=Y MAG=Y GB=N AB=Y IHz=199.8 MHz=10.0*40
 $IIROT,3.8,V*3A
 $IIXDR,A,1.8,D,PTCH*63
 $IIXDR,A,0.9,D,ROLL*71
