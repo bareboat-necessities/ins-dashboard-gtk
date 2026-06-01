@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 128 128"
+  role="img"
+  aria-labelledby="title desc">
+  <title id="title">Ship attitude reference icon</title>
+  <desc id="desc">Forward-facing ship silhouette with a cabin, bridge windows, bow, hull, and centerline keel for attitude displays.</desc>
+  <g fill="none" stroke="#f8fbff" stroke-linecap="round" stroke-linejoin="round">
+    <path
+      d="M64 19v89"
+      stroke-width="4" />
+    <path
+      d="M29 78c11 3 23 4 35 4s24-1 35-4"
+      stroke-width="5" />
+    <path
+      d="M36 75l6 25c7 5 15 8 22 8s15-3 22-8l6-25c-9-3-18-5-28-5s-19 2-28 5z"
+      fill="#f8fbff"
+      stroke-width="4" />
+    <path
+      d="M42 72l6-37c1-5 5-8 10-8h12c5 0 9 3 10 8l6 37"
+      stroke-width="6" />
+    <path
+      d="M50 37h28"
+      stroke-width="5" />
+    <path
+      d="M46 55c12-2 24-2 36 0"
+      stroke-width="5" />
+    <path
+      d="M38 86c16-4 35-4 52 0"
+      stroke="#0a2550"
+      stroke-width="4" />
+    <path
+      d="M64 28v42"
+      stroke-width="4" />
+    <path
+      d="M64 82v26"
+      stroke="#0a2550"
+      stroke-width="3" />
+  </g>
+</svg>
