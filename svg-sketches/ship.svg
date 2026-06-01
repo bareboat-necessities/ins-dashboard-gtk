@@ -1,0 +1,93 @@
+<svg
+  width="128"
+  height="128"
+  viewBox="0 0 128 128"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <defs>
+    <filter id="marineGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3.2" result="blur" />
+      <feColorMatrix
+        in="blur"
+        type="matrix"
+        values="
+          0 0 0 0 0.10
+          0 0 0 0 0.72
+          0 0 0 0 1.00
+          0 0 0 0.85 0"
+        result="cyanGlow"
+      />
+      <feMerge>
+        <feMergeNode in="cyanGlow" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <linearGradient id="shipLine" x1="24" y1="18" x2="104" y2="112">
+      <stop offset="0" stop-color="#55D7FF" />
+      <stop offset="0.55" stop-color="#1FC0FF" />
+      <stop offset="1" stop-color="#1398E8" />
+    </linearGradient>
+
+    <linearGradient id="shipFill" x1="64" y1="28" x2="64" y2="112">
+      <stop offset="0" stop-color="#38BEFF" stop-opacity="0.20" />
+      <stop offset="1" stop-color="#38BEFF" stop-opacity="0.05" />
+    </linearGradient>
+  </defs>
+
+  <g
+    filter="url(#marineGlow)"
+    stroke="url(#shipLine)"
+    stroke-width="5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <!-- Cabin / bridge -->
+    <path
+      d="
+        M36 58
+        L43 34
+        Q46 25 54 23
+        H74
+        Q82 25 85 34
+        L92 58
+      "
+    />
+
+    <!-- Cabin front window band -->
+    <path
+      d="
+        M43 48
+        H85
+        L88 61
+        H40
+        L43 48
+      "
+      fill="rgba(56,190,255,0.10)"
+    />
+
+    <!-- Center windshield divider -->
+    <path d="M64 25 V91" />
+
+    <!-- Hull body -->
+    <path
+      d="
+        M28 58
+        L39 98
+        Q48 108 64 112
+        Q80 108 89 98
+        L100 58
+        L76 69
+        L64 74
+        L52 69
+        L28 58
+      "
+      fill="url(#shipFill)"
+    />
+
+    <!-- Bow ridge lines -->
+    <path d="M39 98 L64 74 L89 98" />
+    <path d="M52 69 L64 74 L76 69" />
+  </g>
+</svg>
