@@ -140,9 +140,10 @@ void draw_primary(cairo_t* cr, const model::InsData& d) {
     text_shadow(cr, "HDG", 60, 72, 40, WHITE, "bold", 0, 0.5);
     text_shadow(cr, fmt(d.heading_deg, 0) + "°", 185, 72, 72, CYAN, "bold", 0, 0.5);
     line(cr, 500, 28, 500, 112, {1, 1, 1, 0.12}, 2);
+    const double rot_rpm_primary = d.rot_deg_min / 360.0;
     text_shadow(cr, "ROT", 555, 72, 40, WHITE, "bold", 0, 0.5);
-    text_shadow(cr, fmt_signed(d.rot_deg_min, 0) + "°", 682, 72, 72, CYAN, "bold", 0, 0.5);
-    text(cr, "/min", 850, 85, 32, CYAN, "bold", 0, 0.5);
+    text_shadow(cr, fmt_signed(rot_rpm_primary, 3), 682, 72, 58, CYAN, "bold", 0, 0.5);
+    text(cr, "RPM", 865, 84, 30, CYAN, "bold", 0, 0.5);
 
     const double cx = 500, cy = 405, r = 290;
     fill_circle_gradient(cr, cx, cy, r + 15, {0.03, 0.10, 0.19, 1.0}, {0.008, 0.018, 0.036, 1.0}, LINE, 5.0);
@@ -220,7 +221,7 @@ void draw_heave(cairo_t* cr, const model::InsData& d, const HeaveHistory& hist, 
     draw_panel(cr, 30, 140, 940, 250);
     line(cr, 210, 165, 210, 360, {1, 1, 1, 0.10}, 2);
     draw_vertical_motion_icon(cr, 122, 260, 0.95, CYAN);
-    text_shadow(cr, fmt_signed(d.heave_m, 2), 315, 255, 122, CYAN, "bold", 0, 0.5);
+    text_shadow(cr, fmt(d.heave_m, 2), 315, 255, 122, CYAN, "bold", 0, 0.5);
     text(cr, "m", 768, 282, 50, CYAN, "bold", 0, 0.5);
     text_shadow(cr, d.heave_vel_mps >= 0 ? "↑" : "↓", 885, 265, 105, GREEN, "bold", 0.5, 0.5);
     text(cr, d.heave_vel_mps >= 0 ? "RISING" : "FALLING", 500, 340, 34, CYAN, "bold", 0.5, 0.5);

@@ -21,10 +21,12 @@ void draw_wave_icon(cairo_t* cr, double x, double y, double scale, Color c) {
 
 void draw_wave_circle_icon(cairo_t* cr, double x, double y, double scale, Color c) {
     setc(cr, c);
-    cairo_set_line_width(cr, 3.2 * scale);
-    cairo_arc(cr, x, y, 34 * scale, 0, 2 * util::PI);
+    cairo_set_line_width(cr, 3.0 * scale);
+
+    cairo_arc(cr, x, y, 30 * scale, 0, 2 * util::PI);
     cairo_stroke(cr);
-    draw_wave_icon(cr, x - 22 * scale, y - 8 * scale, 0.32 * scale, c);
+
+    draw_wave_icon(cr, x - 20 * scale, y - 6 * scale, 0.28 * scale, c);
 }
 
 void draw_wave_from_icon(cairo_t* cr, double x, double y, double scale, Color c) {
@@ -92,14 +94,16 @@ void draw_vertical_motion_icon(cairo_t* cr, double x, double y, double scale, Co
 
 void draw_heave_icon(cairo_t* cr, double x, double y, double scale, Color c) {
     setc(cr, c);
-    cairo_set_line_width(cr, 4.0 * scale);
-    line(cr, x, y + 30 * scale, x, y - 28 * scale, c, 4.0 * scale);
-    cairo_move_to(cr, x, y - 38 * scale);
+
+    // Vertical arrow.
+    line(cr, x, y + 28 * scale, x, y - 28 * scale, c, 3.6 * scale);
+    cairo_move_to(cr, x, y - 40 * scale);
     cairo_line_to(cr, x - 12 * scale, y - 20 * scale);
     cairo_line_to(cr, x + 12 * scale, y - 20 * scale);
     cairo_close_path(cr);
     cairo_fill(cr);
-    draw_wave_icon(cr, x - 42 * scale, y + 12 * scale, 0.38 * scale, c);
+
+    draw_wave_icon(cr, x - 40 * scale, y + 10 * scale, 0.34 * scale, c);
 }
 
 void draw_heave_status_icon(cairo_t* cr, double x, double y, double scale, Color c) {
@@ -140,123 +144,109 @@ void draw_boat_top(cairo_t* cr, double cx, double cy, double scale, Color c) {
 }
 
 void draw_boat_front(cairo_t* cr, double cx, double cy, double scale, Color c) {
-    // Front-view boat symbol for the attitude indicator.
-    // Designed to match the original mockup more closely: broad white bow,
-    // raised cabin, dark windshield panes, and a clean centerline.
-    cairo_save(cr);
-    cairo_translate(cr, cx, cy);
-    cairo_scale(cr, scale, scale);
+    const Color fill{0.96, 0.97, 0.99, 1.0};
 
-    // Outer hull/cabin silhouette.
+    // Center mast / reference line.
+    line(cr, cx, cy - 58 * scale, cx, cy + 44 * scale, c, 3.2 * scale);
+
+    // Upper cabin.
     setc(cr, c);
-    cairo_set_line_width(cr, 4.0);
-    cairo_move_to(cr, -54, 20);
-    cairo_curve_to(cr, -49, 4, -42, -20, -33, -34);
-    cairo_line_to(cr, -23, -58);
-    cairo_curve_to(cr, -17, -65, 17, -65, 23, -58);
-    cairo_line_to(cr, 33, -34);
-    cairo_curve_to(cr, 42, -20, 49, 4, 54, 20);
-    cairo_line_to(cr, 31, 50);
-    cairo_line_to(cr, -31, 50);
+    cairo_set_line_width(cr, 4.0 * scale);
+    cairo_move_to(cr, cx - 18 * scale, cy - 36 * scale);
+    cairo_line_to(cr, cx - 14 * scale, cy - 54 * scale);
+    cairo_line_to(cr, cx + 14 * scale, cy - 54 * scale);
+    cairo_line_to(cr, cx + 18 * scale, cy - 36 * scale);
     cairo_close_path(cr);
     cairo_stroke_preserve(cr);
-    setc(cr, {0.94, 0.96, 0.98, 0.96});
+    setc(cr, fill);
     cairo_fill(cr);
 
-    // Cabin / windshield frame.
+    // Middle bridge/deck.
     setc(cr, c);
-    cairo_set_line_width(cr, 3.4);
-    cairo_move_to(cr, -29, -34);
-    cairo_line_to(cr, -20, -58);
-    cairo_line_to(cr, 20, -58);
-    cairo_line_to(cr, 29, -34);
-    cairo_stroke(cr);
-
-    // Dark windshield panes, similar to the generated sketch.
-    setc(cr, {0.02, 0.055, 0.105, 1.0});
-    cairo_move_to(cr, -24, -31);
-    cairo_line_to(cr, -17, -52);
-    cairo_line_to(cr, -4, -52);
-    cairo_line_to(cr, -5, -29);
+    cairo_set_line_width(cr, 4.0 * scale);
+    cairo_move_to(cr, cx - 30 * scale, cy - 8 * scale);
+    cairo_line_to(cr, cx - 22 * scale, cy - 32 * scale);
+    cairo_line_to(cr, cx + 22 * scale, cy - 32 * scale);
+    cairo_line_to(cr, cx + 30 * scale, cy - 8 * scale);
     cairo_close_path(cr);
+    cairo_stroke_preserve(cr);
+    setc(cr, fill);
     cairo_fill(cr);
 
-    cairo_move_to(cr, 5, -29);
-    cairo_line_to(cr, 4, -52);
-    cairo_line_to(cr, 17, -52);
-    cairo_line_to(cr, 24, -31);
-    cairo_close_path(cr);
-    cairo_fill(cr);
-
-    // Deck/hull seam lines.
-    setc(cr, {0.02, 0.055, 0.105, 1.0});
-    cairo_set_line_width(cr, 3.0);
-    cairo_move_to(cr, -44, 9);
-    cairo_curve_to(cr, -25, 4, -12, 1, 0, 0);
-    cairo_curve_to(cr, 12, 1, 25, 4, 44, 9);
-    cairo_stroke(cr);
-
-    cairo_move_to(cr, -28, 28);
-    cairo_curve_to(cr, -12, 24, 12, 24, 28, 28);
-    cairo_stroke(cr);
-
-    // Centerline and mast/index line.
+    // Lower hull.
     setc(cr, c);
-    cairo_set_line_width(cr, 3.2);
-    cairo_move_to(cr, 0, -74);
-    cairo_line_to(cr, 0, 52);
-    cairo_stroke(cr);
+    cairo_set_line_width(cr, 4.2 * scale);
+    cairo_move_to(cr, cx - 48 * scale, cy + 2 * scale);
+    cairo_line_to(cr, cx - 38 * scale, cy + 36 * scale);
+    cairo_line_to(cr, cx + 38 * scale, cy + 36 * scale);
+    cairo_line_to(cr, cx + 48 * scale, cy + 2 * scale);
+    cairo_line_to(cr, cx + 28 * scale, cy - 8 * scale);
+    cairo_line_to(cr, cx - 28 * scale, cy - 8 * scale);
+    cairo_close_path(cr);
+    cairo_stroke_preserve(cr);
+    setc(cr, fill);
+    cairo_fill(cr);
 
-    // Small roof top line to make the icon less boxy.
-    cairo_set_line_width(cr, 3.0);
-    cairo_move_to(cr, -18, -62);
-    cairo_curve_to(cr, -9, -68, 9, -68, 18, -62);
-    cairo_stroke(cr);
-
-    cairo_restore(cr);
+    // Deck lines like the original mockup.
+    line(cr, cx - 24 * scale, cy - 18 * scale, cx + 24 * scale, cy - 18 * scale, c, 3.0 * scale);
+    line(cr, cx - 40 * scale, cy + 1 * scale,  cx + 40 * scale, cy + 1 * scale,  c, 3.0 * scale);
 }
 
 void draw_pitch_icon(cairo_t* cr, double x, double y, double scale, Color c) {
     setc(cr, c);
     cairo_set_line_width(cr, 3.5 * scale);
-    cairo_move_to(cr, x - 34 * scale, y + 12 * scale);
-    cairo_curve_to(cr, x - 20 * scale, y - 2 * scale, x + 20 * scale, y - 2 * scale, x + 34 * scale, y + 12 * scale);
-    cairo_line_to(cr, x + 26 * scale, y + 26 * scale);
-    cairo_line_to(cr, x - 26 * scale, y + 26 * scale);
+
+    // Side-view hull.
+    cairo_move_to(cr, x - 32 * scale, y + 12 * scale);
+    cairo_curve_to(cr, x - 18 * scale, y - 2 * scale, x + 16 * scale, y - 2 * scale, x + 34 * scale, y + 10 * scale);
+    cairo_line_to(cr, x + 26 * scale, y + 24 * scale);
+    cairo_line_to(cr, x - 24 * scale, y + 24 * scale);
     cairo_close_path(cr);
     cairo_stroke(cr);
-    line(cr, x, y + 10 * scale, x, y - 42 * scale, c, 3.6 * scale);
-    cairo_move_to(cr, x, y - 52 * scale);
-    cairo_line_to(cr, x - 10 * scale, y - 34 * scale);
-    cairo_line_to(cr, x + 10 * scale, y - 34 * scale);
+
+    // Mast / pitch arrow.
+    line(cr, x, y + 10 * scale, x, y - 40 * scale, c, 3.2 * scale);
+    cairo_move_to(cr, x, y - 50 * scale);
+    cairo_line_to(cr, x - 10 * scale, y - 32 * scale);
+    cairo_line_to(cr, x + 10 * scale, y - 32 * scale);
     cairo_close_path(cr);
     cairo_fill(cr);
-    setc(cr, c);
-    cairo_arc(cr, x, y + 29 * scale, 3.8 * scale, 0, 2 * util::PI);
+
+    // Keel dot.
+    cairo_arc(cr, x, y + 26 * scale, 3.5 * scale, 0, 2 * util::PI);
     cairo_fill(cr);
 }
 
 void draw_roll_icon(cairo_t* cr, double x, double y, double scale, Color c) {
     cairo_save(cr);
     cairo_translate(cr, x, y);
-    cairo_rotate(cr, -16.0 * util::DEG);
+    cairo_rotate(cr, -18.0 * util::DEG);
+
     setc(cr, c);
     cairo_set_line_width(cr, 3.5 * scale);
-    cairo_move_to(cr, -30 * scale, 10 * scale);
-    cairo_curve_to(cr, -16 * scale, -6 * scale, 16 * scale, -6 * scale, 30 * scale, 10 * scale);
-    cairo_line_to(cr, 22 * scale, 24 * scale);
-    cairo_line_to(cr, -22 * scale, 24 * scale);
+
+    // Tilted small hull.
+    cairo_move_to(cr, -28 * scale, 8 * scale);
+    cairo_curve_to(cr, -18 * scale, -6 * scale, 18 * scale, -6 * scale, 28 * scale, 8 * scale);
+    cairo_line_to(cr, 20 * scale, 22 * scale);
+    cairo_line_to(cr, -20 * scale, 22 * scale);
     cairo_close_path(cr);
     cairo_stroke(cr);
+
     cairo_restore(cr);
-    draw_wave_icon(cr, x - 40 * scale, y + 28 * scale, 0.32 * scale, c);
+
+    // Waves.
+    draw_wave_icon(cr, x - 38 * scale, y + 26 * scale, 0.30 * scale, c);
+
+    // Curved roll arrow.
     setc(cr, c);
     cairo_set_line_width(cr, 3.0 * scale);
-    cairo_arc(cr, x + 26 * scale, y - 24 * scale, 17 * scale, -2.4, -0.6);
+    cairo_arc(cr, x + 24 * scale, y - 24 * scale, 15 * scale, -2.35, -0.75);
     cairo_stroke(cr);
-    cairo_move_to(cr, x + 37 * scale, y - 31 * scale);
-    cairo_line_to(cr, x + 32 * scale, y - 18 * scale);
-    cairo_line_to(cr, x + 45 * scale, y - 21 * scale);
+
+    cairo_move_to(cr, x + 34 * scale, y - 30 * scale);
+    cairo_line_to(cr, x + 30 * scale, y - 18 * scale);
+    cairo_line_to(cr, x + 42 * scale, y - 21 * scale);
     cairo_close_path(cr);
     cairo_fill(cr);
 }
