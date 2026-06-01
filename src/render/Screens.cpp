@@ -5,9 +5,11 @@
 #include "util/MathUtil.h"
 #include "util/StringUtil.h"
 
+#include <algorithm>
 #include <cmath>
 #include <functional>
 #include <iterator>
+#include <sstream>
 #include <vector>
 
 namespace ins_display::render {
@@ -87,6 +89,39 @@ double estimated_heave_velocity(const HeaveHistory& hist, double now_s) {
 
 double displayed_heave_velocity(const model::InsData& d, const HeaveHistory& hist, double now_s) {
     return d.heave_vel_available ? d.heave_vel_mps : estimated_heave_velocity(hist, now_s);
+}
+
+// Return a readable symmetric top-of-scale value for the heave trace.
+// 1/2/2.5/5/10 steps keep labels familiar while allowing the graph to
+// expand for large waves and contract again when the motion calms down.
+double nice_heave_scale(double required_m) {
+    const double min_scale_m = 0.10;
+    if (!std::isfinite(required_m) || required_m <= min_scale_m) return min_scale_m;
+
+    const double exponent = std::floor(std::log10(required_m));
+    const double base = std::pow(10.0, exponent);
+    const double normalized = required_m / base;
+
+    double nice = 10.0;
+    if (normalized <= 1.0) nice = 1.0;
+    else if (normalized <= 2.0) nice = 2.0;
+    else if (normalized <= 2.5) nice = 2.5;
+    else if (normalized <= 5.0) nice = 5.0;
+
+    return nice * base;
+}
+
+std::string fmt_heave_scale_label(double meters) {
+    std::ostringstream out;
+    out.setf(std::ios::fixed, std::ios::floatfield);
+    out.precision(std::abs(meters) >= 1.0 ? 1 : 2);
+    out << meters;
+    std::string s = out.str();
+
+    while (s.size() > 1 && s.back() == '0') s.pop_back();
+    if (!s.empty() && s.back() == '.') s.pop_back();
+    if (s == "-0") s = "0";
+    return s;
 }
 
 void draw_background(cairo_t* cr) {
@@ -306,11 +341,24 @@ void draw_heave(cairo_t* cr, const model::InsData& d, const HeaveHistory& hist, 
 
     const double gx = 55, gy = 545, gw = 890, gh = 260;
     fill_round_gradient(cr, gx, gy, gw, gh, 18, {0.010, 0.030, 0.060, 0.92}, {0.007, 0.018, 0.040, 0.92}, LINE, 2);
-    auto ymap = [&](double h) { return gy + gh / 2.0 - clampd(h, -0.6, 0.6) / 0.6 * (gh / 2.0 - 20); };
+
+    double max_visible_heave_m = std::abs(d.heave_m);
+    for (auto [t, h] : hist) {
+        const double age = now_s - t;
+        if (age < 0 || age > 20) continue;
+        max_visible_heave_m = std::max(max_visible_heave_m, std::abs(h));
+    }
+
+    const double label_scale_m = nice_heave_scale(max_visible_heave_m);
+    const double plot_scale_m = label_scale_m * 1.2;
+    auto ymap = [&](double h) {
+        return gy + gh / 2.0 - clampd(h, -plot_scale_m, plot_scale_m) / plot_scale_m * (gh / 2.0 - 20);
+    };
+
     line(cr, gx + 80, ymap(0), gx + gw - 25, ymap(0), MUTED, 1.5);
-    text(cr, "+0.5 m", gx + 22, ymap(0.5), 22, WHITE, "normal", 0, 0.5);
+    text(cr, "+" + fmt_heave_scale_label(label_scale_m) + " m", gx + 22, ymap(label_scale_m), 22, WHITE, "normal", 0, 0.5);
     text(cr, "0", gx + 72, ymap(0), 22, WHITE, "normal", 1, 0.5);
-    text(cr, "-0.5 m", gx + 22, ymap(-0.5), 22, WHITE, "normal", 0, 0.5);
+    text(cr, "-" + fmt_heave_scale_label(label_scale_m) + " m", gx + 22, ymap(-label_scale_m), 22, WHITE, "normal", 0, 0.5);
     for (int i = 0; i <= 4; ++i) {
         const double x = gx + 80 + i * (gw - 120) / 4.0;
         line(cr, x, gy + 20, x, gy + gh - 50, {0.25, 0.35, 0.48, 0.40}, 1);
