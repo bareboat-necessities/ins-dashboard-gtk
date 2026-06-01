@@ -499,9 +499,7 @@ void draw_status(cairo_t* cr, const model::InsData& d) {
     draw_check_pill(cr, 590, 42, 350, 60, "SYSTEM HEALTHY", GREEN);
 
     draw_status_row(cr, 0, "ATTITUDE", d.attitude_status, status_color(d.attitude_status), draw_attitude_icon);
-    draw_status_row(cr, 1, "HEAVE", d.heave_status, status_color(d.heave_status), [](cairo_t* cr, double x, double y, double s, Color c) {
-        draw_heave_status_icon(cr, x, y, 0.75 * s, c);
-    });
+    draw_status_row(cr, 1, "HEAVE", d.heave_status, status_color(d.heave_status), draw_heave_status_icon);
     draw_status_row(cr, 2, "WAVE DIR", d.wave_status, status_color(d.wave_status), draw_compass_icon);
     draw_status_row(cr, 3, "MAG", d.mag_status, status_color(d.mag_status), draw_magnet_icon);
     draw_status_row(cr, 4, "GYRO BIAS", d.gyro_bias_status, status_color(d.gyro_bias_status), draw_gyro_icon);
