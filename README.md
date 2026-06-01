@@ -60,7 +60,7 @@ Serial NMEA:
 On Windows, use a COM device path from the MSYS2 shell or `run.bat`:
 
 ```bash
-./build/ins_gtk4_nmea.exe --source serial-nmea0183://COM3?baud=115200
+./build/ins_gtk4_nmea.exe --source serial-nmea0183://COM9?baud=115200
 ```
 
 ## Keyboard controls
