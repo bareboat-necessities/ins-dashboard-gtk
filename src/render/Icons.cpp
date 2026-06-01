@@ -123,15 +123,29 @@ void draw_heave_icon(cairo_t* cr, double x, double y, double scale, Color c) {
 }
 
 void draw_heave_status_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    cairo_save(cr);
     setc(cr, c);
-    line(cr, x, y - 30 * scale, x, y - 2 * scale, c, 3.2 * scale);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+
+    // Compact status version: a clean up-arrow stacked over three wave crests.
+    line(cr, x, y - 29 * scale, x, y - 6 * scale, c, 4.0 * scale);
     cairo_move_to(cr, x, y - 42 * scale);
-    cairo_line_to(cr, x - 10 * scale, y - 24 * scale);
-    cairo_line_to(cr, x + 10 * scale, y - 24 * scale);
-    cairo_close_path(cr);
-    cairo_fill(cr);
-    draw_wave_icon(cr, x - 30 * scale, y - 6 * scale, 0.28 * scale, c);
-    line(cr, x, y + 18 * scale, x, y + 28 * scale, c, 2.4 * scale);
+    cairo_line_to(cr, x - 13 * scale, y - 24 * scale);
+    cairo_move_to(cr, x, y - 42 * scale);
+    cairo_line_to(cr, x + 13 * scale, y - 24 * scale);
+    cairo_stroke(cr);
+
+    cairo_set_line_width(cr, 3.7 * scale);
+    for (int k = 0; k < 3; ++k) {
+        const double yy = y + (2 + k * 13) * scale;
+        cairo_move_to(cr, x - 33 * scale, yy);
+        cairo_curve_to(cr, x - 24 * scale, yy + 5 * scale, x - 15 * scale, yy + 5 * scale, x - 7 * scale, yy);
+        cairo_curve_to(cr, x + 1 * scale, yy - 5 * scale, x + 10 * scale, yy - 5 * scale, x + 18 * scale, yy);
+        cairo_curve_to(cr, x + 25 * scale, yy + 5 * scale, x + 32 * scale, yy + 5 * scale, x + 39 * scale, yy);
+        cairo_stroke(cr);
+    }
+    cairo_restore(cr);
 }
 
 void draw_boat_top(cairo_t* cr, double cx, double cy, double scale, Color c) {
@@ -339,30 +353,53 @@ void draw_compass_icon(cairo_t* cr, double x, double y, double scale, Color c) {
 }
 
 void draw_magnet_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    cairo_save(cr);
     setc(cr, c);
-    cairo_set_line_width(cr, 5 * scale);
-    cairo_arc(cr, x, y, 22 * scale, util::PI, 2 * util::PI);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+    cairo_set_line_width(cr, 4.0 * scale);
+
+    // Reference-style horseshoe magnet: one-color outline with squared pole feet.
+    cairo_move_to(cr, x - 25 * scale, y + 27 * scale);
+    cairo_line_to(cr, x - 25 * scale, y - 9 * scale);
+    cairo_curve_to(cr, x - 25 * scale, y - 28 * scale, x - 13 * scale, y - 40 * scale, x, y - 40 * scale);
+    cairo_curve_to(cr, x + 13 * scale, y - 40 * scale, x + 25 * scale, y - 28 * scale, x + 25 * scale, y - 9 * scale);
+    cairo_line_to(cr, x + 25 * scale, y + 27 * scale);
     cairo_stroke(cr);
-    line(cr, x - 22 * scale, y, x - 22 * scale, y + 18 * scale, c, 5 * scale);
-    line(cr, x + 22 * scale, y, x + 22 * scale, y + 18 * scale, c, 5 * scale);
-    line(cr, x - 28 * scale, y + 18 * scale, x - 16 * scale, y + 18 * scale, RED, 5 * scale);
-    line(cr, x + 16 * scale, y + 18 * scale, x + 28 * scale, y + 18 * scale, CYAN, 5 * scale);
+
+    cairo_set_line_width(cr, 3.2 * scale);
+    line(cr, x - 25 * scale, y + 12 * scale, x - 10 * scale, y + 12 * scale, c, 3.2 * scale);
+    line(cr, x + 10 * scale, y + 12 * scale, x + 25 * scale, y + 12 * scale, c, 3.2 * scale);
+    line(cr, x - 34 * scale, y + 27 * scale, x - 16 * scale, y + 27 * scale, c, 4.0 * scale);
+    line(cr, x + 16 * scale, y + 27 * scale, x + 34 * scale, y + 27 * scale, c, 4.0 * scale);
+    cairo_restore(cr);
 }
 
 void draw_gyro_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    cairo_save(cr);
     setc(cr, c);
-    cairo_set_line_width(cr, 2.8 * scale);
-    cairo_arc(cr, x, y + 2 * scale, 22 * scale, 0.15 * util::PI, 0.85 * util::PI);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+
+    // Reference-style gyro bias mark: vertical axis through a tilted equatorial ring.
+    line(cr, x, y - 36 * scale, x, y + 28 * scale, c, 3.6 * scale);
+
+    cairo_set_line_width(cr, 3.2 * scale);
+    cairo_move_to(cr, x - 37 * scale, y + 7 * scale);
+    cairo_curve_to(cr, x - 31 * scale, y + 23 * scale, x + 31 * scale, y + 23 * scale, x + 37 * scale, y + 7 * scale);
+    cairo_curve_to(cr, x + 31 * scale, y - 6 * scale, x - 31 * scale, y - 6 * scale, x - 37 * scale, y + 7 * scale);
     cairo_stroke(cr);
-    cairo_arc(cr, x, y + 2 * scale, 22 * scale, 1.15 * util::PI, 1.85 * util::PI);
+
+    cairo_set_line_width(cr, 2.5 * scale);
+    cairo_arc(cr, x, y + 7 * scale, 24 * scale, 0.10 * util::PI, 0.90 * util::PI);
     cairo_stroke(cr);
-    cairo_arc(cr, x, y + 2 * scale, 30 * scale, 0.30 * util::PI, 0.70 * util::PI);
+    cairo_arc(cr, x, y + 7 * scale, 24 * scale, 1.10 * util::PI, 1.90 * util::PI);
     cairo_stroke(cr);
-    line(cr, x, y - 30 * scale, x, y + 30 * scale, c, 2.8 * scale);
-    cairo_move_to(cr, x - 8 * scale, y + 34 * scale);
-    cairo_line_to(cr, x, y + 24 * scale);
-    cairo_line_to(cr, x + 8 * scale, y + 34 * scale);
-    cairo_stroke(cr);
+
+    line(cr, x, y + 32 * scale, x, y + 40 * scale, c, 3.0 * scale);
+    line(cr, x - 20 * scale, y + 29 * scale, x - 13 * scale, y + 37 * scale, c, 3.0 * scale);
+    line(cr, x + 20 * scale, y + 29 * scale, x + 13 * scale, y + 37 * scale, c, 3.0 * scale);
+    cairo_restore(cr);
 }
 
 void draw_accel_icon(cairo_t* cr, double x, double y, double scale, Color c) {
@@ -402,25 +439,41 @@ void draw_clock_icon(cairo_t* cr, double x, double y, double scale, Color c) {
 }
 
 void draw_thermo_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    cairo_save(cr);
     setc(cr, c);
-    cairo_set_line_width(cr, 3.5 * scale);
-    cairo_arc(cr, x, y + 14 * scale, 12 * scale, 0, 2 * util::PI);
-    cairo_stroke_preserve(cr);
-    setc(cr, {c.r, c.g, c.b, 0.15});
-    cairo_fill(cr);
-    setc(cr, c);
-    rounded_rect(cr, x - 7 * scale, y - 28 * scale, 14 * scale, 42 * scale, 7 * scale);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+    cairo_set_line_width(cr, 3.6 * scale);
+
+    // Tall thermometer outline matching the slim reference glyph.
+    cairo_move_to(cr, x - 7 * scale, y + 4 * scale);
+    cairo_line_to(cr, x - 7 * scale, y - 32 * scale);
+    cairo_curve_to(cr, x - 7 * scale, y - 40 * scale, x + 7 * scale, y - 40 * scale, x + 7 * scale, y - 32 * scale);
+    cairo_line_to(cr, x + 7 * scale, y + 4 * scale);
     cairo_stroke(cr);
-    line(cr, x, y - 22 * scale, x, y + 8 * scale, c, 4 * scale);
+
+    line(cr, x, y - 26 * scale, x, y + 10 * scale, c, 4.2 * scale);
+    cairo_arc(cr, x, y + 17 * scale, 12 * scale, 0, 2 * util::PI);
+    cairo_stroke_preserve(cr);
+    setc(cr, {c.r, c.g, c.b, 0.18});
+    cairo_fill(cr);
+    cairo_restore(cr);
 }
 
 void draw_samplerate_icon(cairo_t* cr, double x, double y, double scale, Color c) {
+    cairo_save(cr);
     setc(cr, c);
-    cairo_set_line_width(cr, 3.0 * scale);
-    cairo_move_to(cr, x - 34 * scale, y + 8 * scale);
-    cairo_curve_to(cr, x - 24 * scale, y - 28 * scale, x - 10 * scale, y - 28 * scale, x, y + 8 * scale);
-    cairo_curve_to(cr, x + 10 * scale, y + 44 * scale, x + 24 * scale, y + 44 * scale, x + 34 * scale, y + 8 * scale);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+    cairo_set_line_width(cr, 4.0 * scale);
+
+    // Smooth oscillating sample waveform like the reference status row.
+    cairo_move_to(cr, x - 34 * scale, y + 14 * scale);
+    cairo_curve_to(cr, x - 27 * scale, y - 27 * scale, x - 15 * scale, y - 27 * scale, x - 7 * scale, y + 14 * scale);
+    cairo_curve_to(cr, x - 1 * scale, y + 47 * scale, x + 12 * scale, y + 47 * scale, x + 18 * scale, y + 14 * scale);
+    cairo_curve_to(cr, x + 22 * scale, y - 4 * scale, x + 29 * scale, y - 3 * scale, x + 36 * scale, y + 4 * scale);
     cairo_stroke(cr);
+    cairo_restore(cr);
 }
 
 void draw_bars_icon(cairo_t* cr, double x, double y, double scale, Color c) {
