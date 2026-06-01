@@ -87,32 +87,32 @@ magnetic heading, rate of turn, and wave axis using standard NMEA 0183 sentence
 types:
 
 - `IIXDR` transducer measurements:
-  - `A,<degrees>,D,WAVAXIS`: relative wave axis / wave direction
+  - `A,<degrees>,D,WAVAXIS` or `A,<degrees>,D,WAVDIR`: relative wave axis / wave direction
   - `A,<degrees>,D,PTCH`: pitch
   - `A,<degrees>,D,ROLL`: roll
-  - `D,<metres>,M,DRT1`: accepted distance transducer sentence; currently not shown
-    because the dashboard has no dedicated draft/distance field
+  - `D,<metres>,M,DRT1`: real-time heave displacement in metres
+- `IITXT,01,01,00,WAVSGN=<sign> POL=<polarity>`: optional wave-direction
+  sign metadata applied to the latest and subsequent `WAVAXIS`/`WAVDIR` magnitudes
 - `IIROT,<degrees_per_minute>,A`: valid rate of turn
 - `IIHDM,<degrees>,M`: magnetic heading
 
 Example stream:
 
 ```text
-$IIXDR,A,25.5,D,WAVAXIS*14
-$IIROT,-1.8,A*02
-$IIHDM,197.4,M*29
-$IIXDR,A,-16.9,D,PTCH*79
-$IIXDR,A,15.4,D,ROLL*48
-$IIXDR,D,0.0000,M,DRT1*2A
-$IIXDR,A,25.5,D,WAVAXIS*14
-$IIROT,-1.0,A*0A
-$IIHDM,197.4,M*29
-$IIXDR,A,-16.9,D,PTCH*79
-$IIXDR,A,15.4,D,ROLL*48
-$IIXDR,D,0.0000,M,DRT1*2A
-$IIXDR,A,25.5,D,WAVAXIS*14
-$IIROT,-1.6,A*0C
-$IIHDM,197.5,M*28
+$IIXDR,A,1.8,D,PTCH*63
+$IIXDR,A,0.9,D,ROLL*71
+$IIXDR,D,0.0132,M,DRT1*2A
+$IIXDR,A,25.8,D,WAVAXIS*19
+$IIXDR,A,25.8,D,WAVDIR*45
+$IITXT,01,01,00,WAVSGN=1 POL=1*31
+$IIROT,3.8,V*3A
+$IIXDR,A,1.8,D,PTCH*63
+$IIXDR,A,0.9,D,ROLL*71
+$IIXDR,D,0.0120,M,DRT1*29
+$IIXDR,A,25.2,D,WAVAXIS*13
+$IIXDR,A,25.2,D,WAVDIR*4F
+$IITXT,01,01,00,WAVSGN=1 POL=1*31
+$IIROT,4.1,V*34
 ```
 
 Checksums are validated when present. Lines without checksums are still accepted for

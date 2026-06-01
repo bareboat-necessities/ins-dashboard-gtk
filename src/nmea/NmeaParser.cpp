@@ -19,6 +19,47 @@ using util::trim;
 using util::upper;
 using util::wrap360;
 
+int direction_flag_to_sign(const std::string& raw) {
+    const std::string v = upper(trim(raw));
+    if (v.empty()) return 1;
+
+    if (v == "-" || v == "NEG" || v == "NEGATIVE" || v == "PORT" || v == "P" ||
+        v == "LEFT" || v == "L" || v == "CCW") {
+        return -1;
+    }
+    if (v == "+" || v == "POS" || v == "POSITIVE" || v == "STBD" || v == "STARBOARD" ||
+        v == "S" || v == "RIGHT" || v == "R" || v == "CW") {
+        return 1;
+    }
+
+    if (auto n = util::to_int(v)) {
+        if (*n < 0) return -1;
+        if (*n > 0) return 1;
+        return -1;
+    }
+    if (auto x = util::to_double(v)) {
+        if (*x < 0.0) return -1;
+        if (*x > 0.0) return 1;
+        return -1;
+    }
+
+    return 1;
+}
+
+double signed_wave_degrees(const InsData& d, double magnitude_deg) {
+    return static_cast<double>(d.wave_sign * d.wave_polarity) * std::abs(magnitude_deg);
+}
+
+void apply_wave_degrees(InsData& d, double value_deg) {
+    d.wave_rel_mag_deg = std::abs(value_deg);
+    d.wave_rel_deg = value_deg < 0.0 ? wrap360(value_deg) : wrap360(signed_wave_degrees(d, d.wave_rel_mag_deg));
+    d.wave_status = "GOOD";
+}
+
+void reapply_wave_sign(InsData& d) {
+    d.wave_rel_deg = wrap360(signed_wave_degrees(d, d.wave_rel_mag_deg));
+}
+
 void set_status_field(InsData& d, const std::string& key, const std::string& value) {
     const std::string k = upper(key);
     const std::string v = upper(value);
@@ -55,7 +96,7 @@ void parse_pins(const std::vector<std::string>& f, InsData& d) {
     }
 
     if (mode == "WAVE" || mode == "WAVEDIR" || mode == "WAVE_DIR") {
-        if (f.size() > 2) if (auto x = to_double(f[2])) d.wave_rel_deg = wrap360(*x);
+        if (f.size() > 2) if (auto x = to_double(f[2])) apply_wave_degrees(d, *x);
         if (f.size() > 3) if (auto x = to_double(f[3])) d.wave_conf_pct = clampd(*x, 0.0, 100.0);
         return;
     }
@@ -79,7 +120,7 @@ void parse_pins(const std::vector<std::string>& f, InsData& d) {
     if (f.size() >= 5) if (auto x = to_double(f[4])) d.heave_m = *x;
     if (f.size() >= 6) if (auto x = to_double(f[5])) d.heave_vel_mps = *x;
     if (f.size() >= 7) if (auto x = to_double(f[6])) d.rot_deg_min = *x;
-    if (f.size() >= 8) if (auto x = to_double(f[7])) d.wave_rel_deg = wrap360(*x);
+    if (f.size() >= 8) if (auto x = to_double(f[7])) apply_wave_degrees(d, *x);
     if (f.size() >= 9) if (auto x = to_double(f[8])) d.wave_conf_pct = clampd(*x, 0.0, 100.0);
     if (f.size() >= 10) if (auto x = to_double(f[9])) d.hs_m = *x;
     if (f.size() >= 11) if (auto x = to_double(f[10])) d.tp_s = *x;
@@ -116,19 +157,51 @@ void parse_xdr(const std::vector<std::string>& f, InsData& d) {
             d.heading_deg = d.yaw_deg = wrap360(*val);
         } else if (name_contains(name, "HEAVE")) {
             d.heave_m = *val;
+            d.heave_status = "GOOD";
         } else if (name_contains(name, "ROT")) {
             d.rot_deg_min = *val;
-        } else if (name == "WAVAXIS" || name_contains(name, "WAVE")) {
-            d.wave_rel_deg = wrap360(*val);
-            d.wave_status = "GOOD";
+        } else if (name == "WAVAXIS" || name == "WAVDIR" || name_contains(name, "WAVE")) {
+            apply_wave_degrees(d, *val);
         } else if (name == "HS") {
             d.hs_m = *val;
         } else if (name == "TP") {
             d.tp_s = *val;
         } else if (name == "DRT1" && measurement_type == "D" && unit == "M") {
-            // DRT1 is a distance transducer in the target stream. The dashboard has
-            // no dedicated draft/distance field, so accept the sentence without
-            // changing the displayed INS values.
+            d.heave_m = *val;
+            d.heave_status = "GOOD";
+        }
+    }
+}
+
+void parse_txt(const std::vector<std::string>& f, InsData& d) {
+    // $--TXT,total,msg,seq,text. The target wave sensor appends sign metadata such
+    // as "WAVSGN=1 POL=1" after WAVAXIS/WAVDIR XDR sentences.
+    for (size_t i = 4; i < f.size(); ++i) {
+        std::string text = f[i];
+        for (char& c : text) {
+            if (c == ';' || c == ',') c = ' ';
+        }
+
+        std::istringstream tokens(text);
+        std::string token;
+        bool changed = false;
+        while (tokens >> token) {
+            const auto eq = token.find('=');
+            if (eq == std::string::npos) continue;
+
+            const std::string key = upper(token.substr(0, eq));
+            const std::string value = token.substr(eq + 1);
+            if (key == "WAVSGN" || key == "WAVSIGN" || key == "WAVE_SIGN") {
+                d.wave_sign = direction_flag_to_sign(value);
+                changed = true;
+            } else if (key == "POL" || key == "POLARITY" || key == "WAVPOL" || key == "WAVE_POL") {
+                d.wave_polarity = direction_flag_to_sign(value);
+                changed = true;
+            }
+        }
+        if (changed) {
+            reapply_wave_sign(d);
+            d.wave_status = "GOOD";
         }
     }
 }
@@ -195,6 +268,8 @@ void parse_nmea_line(const std::string& raw, model::SharedModel& model) {
         if (f.size() > 2) d.system_status = upper(f[2]) == "A" ? "INS GOOD" : "INS WARN";
     } else if (type == "XDR") {
         parse_xdr(f, d);
+    } else if (type == "TXT") {
+        parse_txt(f, d);
     }
 }
 
