@@ -31,6 +31,33 @@ void draw_triangle(cairo_t* cr, double x, double y, double size, double angle, C
     cairo_restore(cr);
 }
 
+
+void draw_wave_direction_arrow(cairo_t* cr, double cx, double cy, double theta, double length, Color c) {
+    const double tip_x = cx + length * std::cos(theta);
+    const double tip_y = cy + length * std::sin(theta);
+
+    cairo_save(cr);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    glow_line(cr, cx, cy, tip_x, tip_y, c, 8.0, 18.0);
+
+    const double head = 30.0;
+    setc(cr, c);
+    cairo_move_to(cr, tip_x, tip_y);
+    cairo_line_to(cr, tip_x - head * std::cos(theta - 0.46), tip_y - head * std::sin(theta - 0.46));
+    cairo_line_to(cr, tip_x - head * std::cos(theta + 0.46), tip_y - head * std::sin(theta + 0.46));
+    cairo_close_path(cr);
+    cairo_fill(cr);
+    cairo_restore(cr);
+
+    const double wave_x = cx + (length - 62.0) * std::cos(theta);
+    const double wave_y = cy + (length - 62.0) * std::sin(theta);
+    cairo_save(cr);
+    cairo_translate(cr, wave_x, wave_y);
+    cairo_rotate(cr, theta + PI / 2.0);
+    draw_wave_icon(cr, -34.0, -24.0, 0.48, c);
+    cairo_restore(cr);
+}
+
 void draw_background(cairo_t* cr) {
     fill_round_gradient(cr, 8, 8, 984, 984, 24, {0.013, 0.030, 0.055, 1.0}, {0.010, 0.018, 0.035, 1.0}, {0.10, 0.16, 0.26, 1.0}, 2.0);
     for (int i = 0; i < 5; ++i) {
@@ -325,16 +352,9 @@ void draw_wave(cairo_t* cr, const model::InsData& d) {
     draw_triangle(cr, cx, cy + r + 20, 12, 0, CYAN);
     draw_triangle(cr, cx - r - 18, cy, 12, PI / 2, CYAN);
     draw_triangle(cr, cx + r + 18, cy, 12, -PI / 2, CYAN);
-    draw_boat_top(cr, cx, cy, 0.95, WHITE);
-
     const double theta = (d.wave_rel_deg - 90.0) * DEG;
-    const double icon_x = cx + 170 * std::cos(theta);
-    const double icon_y = cy + 170 * std::sin(theta);
-    cairo_save(cr);
-    cairo_translate(cr, icon_x, icon_y);
-    cairo_rotate(cr, theta + PI / 2.0);
-    draw_wave_from_icon(cr, 0, 0, 0.95, CYAN);
-    cairo_restore(cr);
+    draw_wave_direction_arrow(cr, cx, cy, theta, 235.0, CYAN);
+    draw_boat_top(cr, cx, cy, 0.95, WHITE);
 
     draw_panel(cr, 20, 825, 960, 140);
     text_shadow(cr, fmt(d.wave_rel_deg, 0) + "°", 70, 895, 82, CYAN, "bold", 0, 0.5);
