@@ -60,21 +60,78 @@ void reapply_wave_sign(InsData& d) {
     d.wave_rel_deg = wrap360(signed_wave_degrees(d, d.wave_rel_mag_deg));
 }
 
+std::string health_status_from_flag(const std::string& raw, const std::string& good = "GOOD", const std::string& bad = "WARN") {
+    const std::string v = upper(trim(raw));
+    if (v == "Y" || v == "YES" || v == "1" || v == "TRUE" || v == "A" || v == "OK" || v == "GOOD" ||
+        v == "LOCK" || v == "LOCKED" || v == "ON") {
+        return good;
+    }
+    if (v == "N" || v == "NO" || v == "0" || v == "FALSE" || v == "V" || v == "BAD" || v == "WARN" ||
+        v == "OFF") {
+        return bad;
+    }
+    return upper(raw);
+}
+
+std::string activity_status_from_flag(const std::string& raw, const std::string& active, const std::string& inactive) {
+    const std::string v = upper(trim(raw));
+    if (v == "Y" || v == "YES" || v == "1" || v == "TRUE" || v == "A" || v == "ON" || v == active) {
+        return active;
+    }
+    if (v == "N" || v == "NO" || v == "0" || v == "FALSE" || v == "V" || v == "OFF" || v == inactive) {
+        return inactive;
+    }
+    return upper(raw);
+}
+
+bool status_is_good(const std::string& raw) {
+    const std::string v = upper(trim(raw));
+    if (v.find("UNLOCK") != std::string::npos || v.find("WARN") != std::string::npos ||
+        v.find("BAD") != std::string::npos || v == "OFF" || v == "N") {
+        return false;
+    }
+    return v.find("GOOD") != std::string::npos || v.find("LOCK") != std::string::npos ||
+           v.find("STABLE") != std::string::npos || v == "OK" || v == "ON" || v == "Y";
+}
+
+void refresh_system_status(InsData& d) {
+    d.system_status = (status_is_good(d.attitude_status) && status_is_good(d.heave_status) &&
+                       status_is_good(d.mag_status))
+                          ? "INS GOOD"
+                          : "INS WARN";
+}
+
 void set_status_field(InsData& d, const std::string& key, const std::string& value) {
     const std::string k = upper(key);
-    const std::string v = upper(value);
 
-    if (k == "ATT" || k == "ATTITUDE") d.attitude_status = v;
-    else if (k == "HEAVE") d.heave_status = v;
-    else if (k == "WAVE" || k == "WAVEDIR" || k == "WAVE_DIR") d.wave_status = v;
-    else if (k == "MAG") d.mag_status = v;
-    else if (k == "GYRO" || k == "GYROBIAS" || k == "GYRO_BIAS") d.gyro_bias_status = v;
-    else if (k == "ACC" || k == "ACCEL" || k == "ACCBIAS" || k == "ACC_BIAS") d.acc_bias_status = v;
-    else if (k == "TEMP" || k == "TEMP_C") { if (auto x = to_double(value)) d.temp_c = *x; }
-    else if (k == "SAMPLE" || k == "SAMPLE_HZ") { if (auto x = to_double(value)) d.sample_hz = *x; }
-    else if (k == "MAGRATE" || k == "MAG_RATE" || k == "MAG_HZ") { if (auto x = to_double(value)) d.mag_rate_hz = *x; }
-    else if (k == "SYSTEM" || k == "SYS") d.system_status = v;
+    if (k == "ATT" || k == "ATTITUDE") {
+        d.attitude_status = health_status_from_flag(value);
+        refresh_system_status(d);
+    } else if (k == "HEV" || k == "HEAVE") {
+        d.heave_status = health_status_from_flag(value);
+        refresh_system_status(d);
+    } else if (k == "WAVE" || k == "WAVEDIR" || k == "WAVE_DIR") {
+        d.wave_status = health_status_from_flag(value);
+    } else if (k == "MAG") {
+        d.mag_status = health_status_from_flag(value, "LOCKED", "UNLOCKED");
+        refresh_system_status(d);
+    } else if (k == "GB" || k == "GYRO" || k == "GYROBIAS" || k == "GYRO_BIAS") {
+        d.gyro_bias_status = activity_status_from_flag(value, "LEARNING", "STABLE");
+    } else if (k == "AB" || k == "ACC" || k == "ACCEL" || k == "ACCBIAS" || k == "ACC_BIAS") {
+        d.acc_bias_status = activity_status_from_flag(value, "ESTIMATING", "STABLE");
+    } else if (k == "TEMP" || k == "TEMP_C" || k == "IMUT") {
+        if (auto x = to_double(value)) d.temp_c = *x;
+    } else if (k == "SAMPLE" || k == "SAMPLE_HZ" || k == "IHZ" || k == "IMUHZ" || k == "IMU_HZ") {
+        if (auto x = to_double(value)) d.sample_hz = *x;
+    } else if (k == "MAGRATE" || k == "MAG_RATE" || k == "MAG_HZ" || k == "MHZ" || k == "MAGHZ") {
+        if (auto x = to_double(value)) d.mag_rate_hz = *x;
+    } else if (k == "WAVCONF" || k == "WAVE_CONF" || k == "WAVEDIRCONF" || k == "WAVE_DIR_CONF") {
+        if (auto x = to_double(value)) d.wave_conf_pct = clampd(*x, 0.0, 100.0);
+    } else if (k == "SYSTEM" || k == "SYS") {
+        d.system_status = upper(value);
+    }
 }
+
 
 void parse_pins(const std::vector<std::string>& f, InsData& d) {
     if (f.size() < 2) return;
@@ -155,10 +212,9 @@ void parse_xdr(const std::vector<std::string>& f, InsData& d) {
             d.pitch_deg = *val;
         } else if (name_contains(name, "YAW") || name_contains(name, "HDG") || name_contains(name, "HEAD")) {
             d.heading_deg = d.yaw_deg = wrap360(*val);
-        } else if ((name_contains(name, "HEAVE") || name_contains(name, "VERT")) &&
-                   (name_contains(name, "VEL") || name_contains(name, "SPD") ||
-                    name_contains(name, "SPEED")) &&
-                   (unit == "M/S" || unit == "MPS" || unit == "MS")) {
+        } else if (name == "VHSPD" ||
+                   ((name_contains(name, "HEAVE") || name_contains(name, "VERT")) &&
+                    (name_contains(name, "VEL") || name_contains(name, "SPD") || name_contains(name, "SPEED")))) {
             d.heave_vel_mps = *val;
             d.heave_vel_available = true;
         } else if (name_contains(name, "HEAVE")) {
@@ -172,6 +228,8 @@ void parse_xdr(const std::vector<std::string>& f, InsData& d) {
             d.hs_m = *val;
         } else if (name == "TP") {
             d.tp_s = *val;
+        } else if (name == "IMUT" || name_contains(name, "IMU_TEMP") || name_contains(name, "IMUTEMP")) {
+            d.temp_c = *val;
         } else if (name == "DRT1" && measurement_type == "D" && unit == "M") {
             d.heave_m = *val;
             d.heave_status = "GOOD";
@@ -203,6 +261,8 @@ void parse_txt(const std::vector<std::string>& f, InsData& d) {
             } else if (key == "POL" || key == "POLARITY" || key == "WAVPOL" || key == "WAVE_POL") {
                 d.wave_polarity = direction_flag_to_sign(value);
                 changed = true;
+            } else {
+                set_status_field(d, key, value);
             }
         }
         if (changed) {

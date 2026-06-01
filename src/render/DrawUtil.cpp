@@ -139,12 +139,15 @@ void draw_check_pill(cairo_t* cr, double x, double y, double w, double h, const 
 
 Color status_color(const std::string& s) {
     const std::string u = util::upper(s);
+    if (u.find("UNLOCK") != std::string::npos || u.find("BAD") != std::string::npos || u == "OFF" || u == "N") return RED;
     if (u.find("GOOD") != std::string::npos ||
         u.find("LOCK") != std::string::npos ||
         u.find("STABLE") != std::string::npos ||
-        u.find("HEALTH") != std::string::npos) return GREEN;
+        u.find("HEALTH") != std::string::npos ||
+        u == "OK" || u == "ON" || u == "Y") return GREEN;
     if (u.find("FAIR") != std::string::npos ||
         u.find("LEARN") != std::string::npos ||
+        u.find("ESTIM") != std::string::npos ||
         u.find("WARN") != std::string::npos) return YELLOW;
     return RED;
 }
