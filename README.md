@@ -2,20 +2,6 @@
 
 GTK4/C++20 marine INS display for NMEA 0183 streams.
 
-This refactored version splits the original monolithic `main.cpp` into logical modules:
-
-```text
-src/
-  main.cpp                  CLI parsing + application startup only
-  app/                      GTK application wiring, timer, keyboard handling
-  input/                    TCP/serial/demo input readers and source URI parsing
-  model/                    Shared INS data model
-  nmea/                     NMEA checksum and sentence parser
-  render/                   Cairo drawing helpers, icons, and screen drawing
-  sim/                      Demo/synthetic INS data generator
-  util/                     String and math helpers
-```
-
 ## Build
 
 Linux:
