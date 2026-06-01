@@ -21,7 +21,7 @@ struct InsData {
     double hs_m = 0.72;
     double tp_s = 4.8;
     double temp_c = 36.8;
-    double sample_hz = 240.0;
+    double sample_hz = 200.0;
     double mag_rate_hz = 100.0;
 
     std::string attitude_status = "GOOD";
