@@ -2,6 +2,10 @@
 
 GTK4/C++20 marine INS display for NMEA 0183 streams.
 
+Works best with INS sensors described here:
+
+https://github.com/bareboat-necessities/ocean-imu
+
 ## Build
 
 Linux:
